@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0F6E56">
+<title>Distrigama · App de Campo</title>
+<link rel="manifest" href="manifest.json">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --g:#0F6E56;--gl:#E1F5EE;--gm:#1D9E75;
+  --a:#BA7517;--al:#FAEEDA;
+  --r:#A32D2D;--rl:#FCEBEB;
+  --bg:#F4F2EC;--card:#FFF;--text:#1A1A1A;--muted:#6B6B6B;--border:#E0DDD4;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:15px;min-height:100vh}
+.hdr{background:var(--g);color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.hdr-l{font-family:monospace;font-size:13px;font-weight:700;letter-spacing:.05em}
+.hdr-s{font-size:11px;opacity:.7;margin-top:1px}
+.hdr-r{display:flex;align-items:center;gap:10px}
+.notif-btn{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;position:relative;padding:4px}
+.notif-badge{position:absolute;top:0;right:0;background:#FF5722;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;display:none}
+.tabs{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:52px;z-index:199}
+.tab{padding:11px 4px;text-align:center;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;transition:all .15s;user-select:none}
+.tab.on{color:var(--g);border-bottom-color:var(--g)}
+.scr{display:none;padding:14px;max-width:960px;margin:0 auto}
+.scr.on{display:block}
+/* NOTIFICATION PANEL */
+.notif-panel{display:none;position:fixed;top:52px;right:0;width:320px;max-height:400px;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:0 0 0 12px;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+.notif-panel.on{display:block}
+.notif-hdr{padding:12px 14px;font-weight:700;font-size:13px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.notif-item{padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.notif-item:hover{background:var(--gl)}
+.notif-item.unread{background:#FFFBF0}
+.notif-title{font-size:13px;font-weight:600;margin-bottom:3px}
+.notif-body{font-size:12px;color:var(--muted)}
+.notif-time{font-size:11px;color:var(--muted);margin-top:3px;font-family:monospace}
+/* LOGIN */
+#login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:var(--bg)}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px 24px;width:100%;max-width:360px;text-align:center}
+.login-logo{font-family:monospace;font-size:14px;font-weight:700;color:var(--g);letter-spacing:.05em;margin-bottom:4px}
+.login-title{font-size:22px;font-weight:700;margin-bottom:6px}
+.login-sub{font-size:14px;color:var(--muted);margin-bottom:24px}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;border:1.5px solid var(--border);border-radius:10px;background:var(--card);font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text)}
+.btn-google:hover{border-color:var(--g);background:var(--gl)}
+.btn-google img{width:20px;height:20px}
+/* SETUP */
+#setup-screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:var(--bg)}
+.setup-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 24px;width:100%;max-width:400px}
+.setup-title{font-size:18px;font-weight:700;margin-bottom:6px}
+.setup-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+/* COMMON */
+.sec-t{font-family:monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px}
+.sec-t:first-child{margin-top:0}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.fld{margin-bottom:10px}
+.fld label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.fld input,.fld select,.fld textarea{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:15px;background:var(--card);color:var(--text);outline:none;transition:border .15s;-webkit-appearance:none}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--g)}
+.fld textarea{resize:vertical;min-height:64px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.tipo-btn{padding:11px 6px;text-align:center;border:2px solid var(--border);border-radius:10px;cursor:pointer;background:var(--card);transition:all .15s;user-select:none}
+.tipo-btn .t{font-weight:700;font-size:15px}
+.tipo-btn .s{font-size:10px;color:var(--muted);margin-top:2px}
+.tipo-btn.on-A{border-color:var(--g);background:var(--gl)}
+.tipo-btn.on-B{border-color:var(--a);background:var(--al)}
+.tipo-btn.on-C{border-color:#888;background:#F1EFE8}
+.chk-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.chk{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;cursor:pointer;background:var(--card);transition:all .15s;font-size:13px;font-weight:500;user-select:none}
+.chk.on{border-color:var(--g);background:var(--gl);color:var(--g)}
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:10px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center}
+.btn-g{background:var(--g);color:#fff}
+.btn-g:hover{background:var(--gm)}
+.btn-out{background:var(--card);color:var(--g);border:2px solid var(--g)}
+.btn-sm{display:inline-block;width:auto;padding:9px 16px;font-size:13px;border-radius:8px}
+.btn-danger{background:var(--rl);color:var(--r);border:1px solid var(--r)}
+.btn-wa{background:#25D366;color:#fff}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;font-family:monospace;margin-left:5px}
+.ba-A{background:var(--gl);color:var(--g)}
+.ba-B{background:var(--al);color:var(--a)}
+.ba-C{background:#F1EFE8;color:#666}
+.sv-item{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:13px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.sv-name{font-weight:600;font-size:15px}
+.sv-meta{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:14px;text-align:center}
+.stat-n{font-family:monospace;font-size:22px;font-weight:700;color:var(--g)}
+.stat-l{font-size:11px;color:var(--muted);margin-top:3px}
+.fb{display:none;margin-top:10px;padding:11px 14px;border-radius:9px;font-size:14px;font-weight:600;text-align:center}
+/* PEDIDO */
+.moneda-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.mon-btn{padding:10px;text-align:center;border:2px solid var(--border);border-radius:9px;cursor:pointer;font-weight:600;font-size:14px;background:var(--card);transition:all .15s;user-select:none}
+.mon-btn.on{border-color:var(--g);background:var(--g);color:#fff}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:5px;margin-bottom:10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;border:1.5px solid var(--border);background:var(--card);color:var(--muted);transition:all .15s;flex-shrink:0;user-select:none}
+.chip.on{background:var(--g);color:#fff;border-color:var(--g)}
+.srch-w{position:relative;margin-bottom:10px}
+.srch-w input{padding-left:42px}
+.srch-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:18px;pointer-events:none}
+.prod-list{max-height:300px;overflow-y:auto;border:1.5px solid var(--border);border-radius:11px;background:var(--card)}
+.prod-row{display:flex;align-items:center;padding:11px 13px;border-bottom:1px solid var(--border);gap:10px;cursor:pointer;transition:background .1s}
+.prod-row:last-child{border-bottom:none}
+.prod-row:hover,.prod-row.in{background:var(--gl)}
+.p-code{font-family:monospace;font-size:10px;color:var(--muted);min-width:80px;flex-shrink:0}
+.p-name{flex:1;font-size:13px;line-height:1.4}
+.p-unit{font-size:10px;color:var(--muted)}
+.p-price{font-family:monospace;font-size:13px;font-weight:700;color:var(--g);min-width:52px;text-align:right;flex-shrink:0}
+.p-add{background:var(--g);color:#fff;border:none;border-radius:7px;width:28px;height:28px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700}
+.cart-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.cart-item{display:grid;grid-template-columns:1fr auto auto 28px;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
+.cart-item:last-child{border-bottom:none}
+.ci-name{font-size:13px;line-height:1.3}
+.ci-code{font-family:monospace;font-size:10px;color:var(--muted)}
+.qty-ctrl{display:flex;align-items:center;gap:5px}
+.qty-btn{background:var(--border);border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-weight:700;font-size:16px;color:var(--text)}
+.qty-in{width:44px;text-align:center;border:1.5px solid var(--border);border-radius:6px;padding:4px;font-size:14px;font-family:monospace}
+.ci-tot{font-family:monospace;font-size:14px;font-weight:700;color:var(--g);min-width:58px;text-align:right}
+.ci-del{background:none;border:none;color:var(--r);cursor:pointer;font-size:20px;line-height:1;padding:0}
+.disc-bar{background:var(--al);border:1.5px solid var(--a);border-radius:11px;padding:13px 14px;margin-top:10px}
+.disc-title{font-size:13px;font-weight:700;color:var(--a);margin-bottom:9px}
+.disc-opts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.disc-opt{padding:9px 5px;text-align:center;border:2px solid var(--border);border-radius:9px;cursor:pointer;background:var(--card);transition:all .15s;font-size:12px;font-weight:600;user-select:none;line-height:1.4}
+.disc-opt.on{border-color:var(--a);background:var(--al);color:var(--a)}
+.sum-row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px;border-bottom:1px solid var(--border)}
+.sum-row:last-child{border-bottom:none;font-weight:700;font-size:16px;color:var(--g);padding-top:9px}
+.sum-lbl{color:var(--muted)}
+.sum-val{font-family:monospace;font-weight:600}
+/* MANUAL */
+.manual-nav{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.man-btn{padding:7px 14px;border:1.5px solid var(--border);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;background:var(--card);color:var(--muted);transition:all .15s;user-select:none}
+.man-btn.on{background:var(--g);color:#fff;border-color:var(--g)}
+.man-section{display:none}
+.man-section.on{display:block}
+.man-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.man-highlight{background:var(--gl);border-left:3px solid var(--g);border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:12px;font-size:14px;line-height:1.7;color:var(--g)}
+.man-h2{font-size:16px;font-weight:700;color:var(--text);margin:16px 0 8px}
+.man-h2:first-child{margin-top:0}
+.man-body{font-size:14px;line-height:1.7;color:var(--text);margin-bottom:8px}
+.man-ul{padding-left:0;margin-bottom:8px;list-style:none}
+.man-ul li{font-size:14px;line-height:1.6;padding:4px 0 4px 20px;position:relative;color:var(--text)}
+.man-ul li::before{content:'•';position:absolute;left:0;color:var(--g);font-weight:700}
+.man-table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:13px}
+.man-table th{background:var(--g);color:#fff;padding:9px 10px;text-align:left;font-weight:600}
+.man-table td{padding:8px 10px;border-bottom:1px solid var(--border)}
+.man-table tr:nth-child(even) td{background:#F8F7F3}
+.man-table tr:last-child td{border-bottom:none}
+.man-tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;font-family:monospace}
+.man-tag-g{background:var(--gl);color:var(--g)}
+.man-tag-a{background:var(--al);color:var(--a)}
+.man-tag-r{background:var(--rl);color:var(--r)}
+.man-pending{background:#FFF8E1;border:1px solid var(--a);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:13px;color:var(--a)}
+.man-pending strong{display:block;margin-bottom:2px}
+.update-banner{display:none;background:var(--a);color:#fff;padding:10px 16px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;position:sticky;top:52px;z-index:198}
+.update-banner.on{display:block}
+/* EMPTY */
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-ico{font-size:36px;margin-bottom:8px}
+/* REPORT */
+.report-box{background:var(--card);border:1.5px solid var(--border);border-radius:11px;padding:14px;margin-bottom:10px}
+.report-pre{font-family:monospace;font-size:12px;line-height:1.8;white-space:pre-wrap;color:var(--text)}
+/* GPS */
+.gps-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.gps-btn{flex-shrink:0;padding:10px 14px;border:1.5px solid var(--g);border-radius:9px;background:var(--gl);color:var(--g);font-size:13px;font-weight:600;cursor:pointer}
+.gps-status{font-size:12px;color:var(--muted);flex:1}
+@media(min-width:768px){
+  .tablet-split{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  .scr{padding:20px 24px}
+  .prod-list{max-height:440px}
+}
+</style>
+</head>
+<body>
+
+<!-- UPDATE BANNER -->
+<div class="update-banner" id="update-banner" onclick="openManual()">
+  📢 El manual fue actualizado — toca para ver los cambios
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">DISTRIGAMA · GRAN CARACAS</div>
+    <div class="login-title">App de campo</div>
+    <div class="login-sub">Inicia sesión con tu cuenta de Google</div>
+    <button class="btn-google" onclick="signInGoogle()">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-21 0-1.3-.2-2.7-.5-4z"/><path fill="#34A853" d="M6.3 14.7l7 5.1C15.1 16.4 19.2 14 24 14c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 16.3 2 9.7 6.4 6.3 14.7z"/><path fill="#FBBC05" d="M24 46c5.5 0 10.5-1.9 14.3-4.9l-6.6-5.4C29.6 37.5 26.9 38 24 38c-6.1 0-10.7-3.1-11.8-7.5L5 36c3.4 8.3 10 14 19 14z"/><path fill="#EA4335" d="M44.5 20H24v8.5h11.8c-1.1 3-3.5 5.5-6.5 7.1l6.6 5.4C40.4 37.8 45 31.5 45 24c0-1.3-.2-2.7-.5-4z"/></svg>
+      Continuar con Google
+    </button>
+  </div>
+</div>
+
+<!-- SETUP (first time) -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-title">Configura tu perfil</div>
+    <div class="setup-sub">Esta información se guarda una sola vez</div>
+    <div class="fld"><label>Tu nombre completo</label>
+      <input type="text" id="su-nombre" placeholder="Nombre Apellido" autocomplete="off"></div>
+    <div class="fld"><label>Tu teléfono</label>
+      <input type="tel" id="su-tel" placeholder="0414-..." autocomplete="off"></div>
+    <div class="fld"><label>Tu ruta principal</label>
+      <select id="su-ruta">
+        <option value="">Seleccionar...</option>
+        <option>Ruta 1 · Catia</option>
+        <option>Ruta 2 · Centro</option>
+        <option>Ruta 3 · La Yaguara</option>
+        <option>Ruta 4 · Eje Sur</option>
+        <option>Ruta 5 · Eje Financiero</option>
+        <option>Ruta 6 · Boleíta Industrial</option>
+        <option>Ruta 7 · Petare / Mariche</option>
+        <option>Ruta 8 · Baruta / Hatillo</option>
+        <option>Ruta 9 · Guarenas / Guatire</option>
+        <option>Ruta 10 · Altos Mirandinos</option>
+      </select>
+    </div>
+    <button class="btn btn-g" onclick="saveSetup()">Guardar y comenzar</button>
+    <div class="fb" id="su-fb"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none">
+  <div class="hdr">
+    <div>
+      <div class="hdr-l">DISTRIGAMA · GRAN CARACAS</div>
+      <div class="hdr-s" id="hdr-user">Cargando...</div>
+    </div>
+    <div class="hdr-r">
+      <div id="hdr-date" style="font-family:monospace;font-size:11px;opacity:.7;text-align:right"></div>
+      <button class="notif-btn" onclick="toggleNotif()" title="Notificaciones">
+        🔔
+        <span class="notif-badge" id="notif-badge">0</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="notif-panel" id="notif-panel">
+    <div class="notif-hdr">
+      <span>Notificaciones</span>
+      <button onclick="markAllRead()" style="background:none;border:none;font-size:12px;color:var(--g);cursor:pointer;font-weight:600">Marcar leídas</button>
+    </div>
+    <div id="notif-list"></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" data-tab="censo" onclick="sw('censo')">📍 Censo</div>
+    <div class="tab" data-tab="pedido" onclick="sw('pedido')">🛒 Pedido</div>
+    <div class="tab" data-tab="manual" onclick="sw('manual')">📖 Manual</div>
+    <div class="tab" data-tab="dia" onclick="sw('dia')">📊 Mi día</div>
+  </div>
+
+  <!-- CENSO -->
+  <div class="scr on" id="scr-censo">
+    <div class="sec-t">Registrar visita</div>
+    <div class="fld"><label>Nombre del local *</label>
+      <input type="text" id="c-nom" placeholder="Ej: Ferretería Central Petare" autocomplete="off"></div>
+    <div class="fld"><label>Tipo de local *</label>
+      <div class="grid3">
+        <div class="tipo-btn" id="tA" onclick="setTipo('A')"><div class="t">Tipo A</div><div class="s">Gran ferretería</div></div>
+        <div class="tipo-btn" id="tB" onclick="setTipo('B')"><div class="t">Tipo B</div><div class="s">Mediana avenida</div></div>
+        <div class="tipo-btn" id="tC" onclick="setTipo('C')"><div class="t">Tipo C</div><div class="s">Pequeña / barrio</div></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="fld"><label>Nombre del contacto</label>
+        <input type="text" id="c-ctc-nom" placeholder="Responsable de compras" autocomplete="off"></div>
+      <div class="fld"><label>Teléfono del contacto</label>
+        <input type="tel" id="c-ctc-tel" placeholder="0414-..." autocomplete="off"></div>
+    </div>
+    <div class="fld"><label>Ruta</label>
+      <select id="c-ruta">
+        <option value="">Seleccionar...</option>
+        <option>Ruta 1 · Catia</option>
+        <option>Ruta 2 · Centro</option>
+        <option>Ruta 3 · La Yaguara</option>
+        <option>Ruta 4 · Eje Sur</option>
+        <option>Ruta 5 · Eje Financiero</option>
+        <option>Ruta 6 · Boleíta Industrial</option>
+        <option>Ruta 7 · Petare / Mariche</option>
+        <option>Ruta 8 · Baruta / Hatillo</option>
+        <option>Ruta 9 · Guarenas / Guatire</option>
+        <option>Ruta 10 · Altos Mirandinos</option>
+      </select>
+    </div>
+    <div class="fld"><label>Ubicación del local</label>
+      <div class="gps-row">
+        <button class="gps-btn" onclick="captureGPS()">📍 Capturar GPS</button>
+        <div class="gps-status" id="gps-status">Sin ubicación registrada</div>
+      </div>
+    </div>
+    <div class="fld"><label>Líneas visibles en el local</label>
+      <div class="chk-grid">
+        <div class="chk" onclick="tgLinea(this,'Material eléctrico')">⚡ Material eléctrico</div>
+        <div class="chk" onclick="tgLinea(this,'Conexiones de agua')">💧 Conexiones de agua</div>
+        <div class="chk" onclick="tgLinea(this,'Iluminación LED')">💡 Iluminación LED</div>
+        <div class="chk" onclick="tgLinea(this,'Herramientas')">🔧 Herramientas</div>
+        <div class="chk" onclick="tgLinea(this,'Cerrajería')">🔑 Cerrajería</div>
+        <div class="chk" onclick="tgLinea(this,'Plomería')">🚿 Plomería</div>
+        <div class="chk" onclick="tgLinea(this,'Griferías')">🚰 Griferías</div>
+        <div class="chk" onclick="tgLinea(this,'Bombillos')">💡 Bombillos / Ilum.</div>
+      </div>
+    </div>
+    <div class="fld"><label>Resultado de la visita</label>
+      <select id="c-res">
+        <option value="">Seleccionar...</option>
+        <option>Pedido cerrado</option>
+        <option>Apertura en proceso</option>
+        <option>Seguimiento pendiente</option>
+        <option>No interesado</option>
+        <option>Solo levantamiento de data</option>
+      </select>
+    </div>
+    <div class="fld"><label>Observaciones</label>
+      <textarea id="c-obs" placeholder="Horario, quién decide compras, próxima visita, intereses..."></textarea></div>
+    <button class="btn btn-g" onclick="saveCenso()">Guardar registro</button>
+    <div class="fb" id="c-fb"></div>
+    <div class="sec-t">Registros de hoy (<span id="c-cnt">0</span>)</div>
+    <div id="c-list"></div>
+  </div>
+
+  <!-- PEDIDO -->
+  <div class="scr" id="scr-pedido">
+    <div class="tablet-split">
+      <div>
+        <div class="card">
+          <div class="sec-t" style="margin-top:0">Datos del cliente</div>
+          <div class="fld"><label>Razón social / Nombre</label>
+            <input type="text" id="p-cli" placeholder="Ferretería..." autocomplete="off"></div>
+          <div class="grid2">
+            <div class="fld"><label>Teléfono</label>
+              <input type="text" id="p-tel" placeholder="0414-..." autocomplete="off"></div>
+            <div class="fld"><label>RIF</label>
+              <input type="text" id="p-rif" placeholder="J-..." autocomplete="off"></div>
+          </div>
+          <div class="fld"><label>Dirección de despacho</label>
+            <input type="text" id="p-dir" placeholder="Dirección exacta..." autocomplete="off"></div>
+          <div class="grid2">
+            <div class="fld"><label>Vendedor</label>
+              <input type="text" id="p-vend" placeholder="Tu nombre" autocomplete="off"></div>
+            <div class="fld"><label>Días de crédito</label>
+              <select id="p-cred">
+                <option>Contado</option>
+                <option>15 días</option>
+                <option>30 días</option>
+              </select>
+            </div>
+          </div>
+          <div class="fld"><label>Moneda de cobro</label>
+            <div class="moneda-grid">
+              <div class="mon-btn on" id="m-usd" onclick="setMon('USD',this)">💵 Dólares (USD)</div>
+              <div class="mon-btn" id="m-bcv" onclick="setMon('BCV',this)">🇻🇪 BCV (Bolívares)</div>
+            </div>
+          </div>
+        </div>
+        <div class="sec-t">Catálogo</div>
+        <div class="chips" id="chips">
+          <div class="chip on" onclick="fCat('',this)">Todos</div>
+          <div class="chip" onclick="fCat('ELECTRICIDAD',this)">Electricidad</div>
+          <div class="chip" onclick="fCat('PLOMERIA',this)">Plomería</div>
+          <div class="chip" onclick="fCat('BOMBAS',this)">Bombas</div>
+          <div class="chip" onclick="fCat('TIRRAP',this)">Tirrap</div>
+          <div class="chip" onclick="fCat('GRIFERIAS',this)">Griferías</div>
+          <div class="chip" onclick="fCat('ABRAZADERA',this)">Abrazadera</div>
+          <div class="chip" onclick="fCat('FERRETERIA',this)">Ferretería</div>
+          <div class="chip" onclick="fCat('MECHA',this)">Mechas</div>
+          <div class="chip" onclick="fCat('DISCO',this)">Discos</div>
+          <div class="chip" onclick="fCat('CANDADOS',this)">Candados</div>
+          <div class="chip" onclick="fCat('HERRAMIENTAS',this)">Herramientas</div>
+          <div class="chip" onclick="fCat('BOMBILLOS',this)">Bombillos</div>
+          <div class="chip" onclick="fCat('ILUMINACION',this)">Iluminación</div>
+        </div>
+        <div class="srch-w">
+          <span class="srch-ico">🔍</span>
+          <input type="text" id="p-srch" placeholder="Buscar código o nombre..." oninput="renderProds()" autocomplete="off">
+        </div>
+        <div class="prod-list" id="p-list"></div>
+      </div>
+      <div>
+        <div class="card" id="cart-card" style="display:none">
+          <div class="cart-hdr">
+            <span style="font-weight:700;font-size:16px">Carrito <span style="color:var(--muted);font-size:14px">(<span id="cart-cnt">0</span>)</span></span>
+            <button class="btn btn-danger btn-sm" onclick="clearCart()">Vaciar</button>
+          </div>
+          <div id="cart-items"></div>
+          <div class="disc-bar">
+            <div class="disc-title">💰 Descuento por forma de pago</div>
+            <div class="disc-opts">
+              <div class="disc-opt" id="d0" onclick="setDisc(0,this)">Sin descuento<br><small style="font-weight:400;color:var(--muted)">Precio BCV</small></div>
+              <div class="disc-opt on" id="d35" onclick="setDisc(35,this)">−35%<br><small style="font-weight:400">Pago divisa</small></div>
+              <div class="disc-opt" id="d40" onclick="setDisc(40,this)">−40%<br><small style="font-weight:400">Divisa + pronto</small></div>
+            </div>
+          </div>
+          <div style="margin-top:12px" id="summary"></div>
+          <div class="btn-row">
+            <button class="btn btn-out btn-sm" onclick="copyPed()">📋 Copiar texto</button>
+            <button class="btn btn-g btn-sm" onclick="dlXLSX()">📥 Excel</button>
+          </div>
+          <div style="margin-top:8px">
+            <button class="btn btn-wa" onclick="sendWA()">📲 Enviar por WhatsApp</button>
+          </div>
+        </div>
+        <div id="cart-empty" class="empty"><div class="empty-ico">🛒</div><div style="font-size:14px">Agrega productos al carrito</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANUAL -->
+  <div class="scr" id="scr-manual">
+    <div class="manual-nav" id="manual-nav">
+      <div class="man-btn on" onclick="showMan('oportunidad',this)">💡 La oportunidad</div>
+      <div class="man-btn" onclick="showMan('comisiones',this)">💰 Comisiones</div>
+      <div class="man-btn" onclick="showMan('zona',this)">🗺️ Zonificación</div>
+      <div class="man-btn" onclick="showMan('apertura',this)">👤 Apertura cliente</div>
+      <div class="man-btn" onclick="showMan('pedido-m',this)">📋 Pedidos</div>
+      <div class="man-btn" onclick="showMan('cobranza',this)">💳 Cobranza</div>
+      <div class="man-btn" onclick="showMan('politicas',this)">📜 Políticas</div>
+      <div class="man-btn" onclick="showMan('metas',this)">🏆 Metas</div>
+      <div class="man-btn" onclick="showMan('onboarding',this)">📅 Primeros 7 días</div>
+      <div class="man-btn" onclick="showMan('contactos',this)">📞 Contactos</div>
+    </div>
+
+    <!-- OPORTUNIDAD -->
+    <div class="man-section on" id="man-oportunidad">
+      <div class="man-highlight">Distrigama es un distribuidor nacional con portafolio en ferretería, electricidad e iluminación. Este canal en Gran Caracas está en construcción — tú eres parte del equipo fundador. Eso tiene un precio y una ventaja: cada cliente que apertures durante los primeros 90 días vale hasta $20 adicionales a tu comisión normal.</div>
+      <div class="man-card">
+        <div class="man-h2">Por qué un cliente elige Distrigama</div>
+        <ul class="man-ul">
+          <li>Precios referenciados a tasa BCV dólar — el cliente no pierde contra el mercado</li>
+          <li>Crédito real: 15 días desde $200 BCV / 30 días desde $700 BCV</li>
+          <li>35% de descuento por pago en divisas — argumento de cierre poderoso</li>
+          <li>5% adicional por pronto pago en divisas</li>
+          <li>30% de descuento en conexiones de agua desde 400 piezas</li>
+          <li>Garantía de 1 año en todos los productos por defecto de fábrica — se aplica nota de crédito o cambio de producto</li>
+          <li>Despacho en 5 a 9 días hábiles</li>
+          <li>Portafolio amplio: electricidad, iluminación LED, plomería, herramientas, cerrajería, tirrap y más</li>
+        </ul>
+      </div>
+      <div class="man-card">
+        <div class="man-h2">¿Cuánto tiempo necesitas invertir?</div>
+        <div class="man-body">Para alcanzar $3.000 en el mes 1, con ticket promedio de $150–$200 por pedido, necesitas cerrar entre 15 y 20 pedidos. Con tasa de cierre realista del 20–25% en visitas frías:</div>
+        <table class="man-table">
+          <tr><th>Indicador</th><th>Referencia diaria</th><th>Referencia mensual</th></tr>
+          <tr><td>Visitas efectivas</td><td>3 a 5</td><td>60 a 100 ferreterías</td></tr>
+          <tr><td>Horas de calle</td><td>5 a 6 horas</td><td>—</td></tr>
+          <tr><td>Pedidos a cerrar</td><td>1 cada 3–5 días</td><td>15 a 20 pedidos</td></tr>
+        </table>
+        <div class="man-body" style="background:var(--al);border-radius:8px;padding:10px;color:var(--a);font-weight:600">⚠ Visita efectiva = conversación con el responsable de compras. Entrar al local sin hablar con quien decide NO cuenta como visita efectiva.</div>
+      </div>
+    </div>
+
+    <!-- COMISIONES -->
+    <div class="man-section" id="man-comisiones">
+      <div class="man-highlight">Tu comisión se paga en cortes quincenales sobre las facturas efectivamente cobradas. Se paga en la misma moneda en que cobras — si cobras en dólares, recibes dólares.</div>
+      <div class="man-card">
+        <div class="man-h2">Categorías de productos</div>
+        <ul class="man-ul">
+          <li><strong>Productos estándar:</strong> comisión base del 7%. Aplica a la mayoría del portafolio.</li>
+          <li><strong>Productos Wokin:</strong> comisión base del 4%. Aplica exclusivamente a productos con marca Wokin.</li>
+        </ul>
+      </div>
+      <div class="man-card">
+        <div class="man-h2">Tabla de comisiones según cobranza</div>
+        <div class="man-body">La comisión se reduce según los días de retraso después del vencimiento:</div>
+        <table class="man-table">
+          <tr><th>Situación de cobro</th><th>Estándar</th><th>Wokin</th></tr>
+          <tr><td>✅ Cobrado hasta el vencimiento</td><td style="color:#0F6E56;font-weight:700">7%</td><td style="color:#0F6E56;font-weight:700">4%</td></tr>
+          <tr><td>Hasta 6 días después</td><td style="font-weight:700">6%</td><td style="font-weight:700">4%</td></tr>
+          <tr><td>Hasta 10 días después</td><td style="font-weight:700">5%</td><td style="font-weight:700">3%</td></tr>
+          <tr><td>Hasta 15 días después</td><td style="font-weight:700">4%</td><td style="font-weight:700">3%</td></tr>
+          <tr><td style="color:#A32D2D">20 días o más después</td><td style="color:#A32D2D;font-weight:700">2%</td><td style="color:#A32D2D;font-weight:700">2%</td></tr>
+        </table>
+      </div>
+      <div class="man-card">
+        <div class="man-h2">Plazos de crédito</div>
+        <table class="man-table">
+          <tr><th>Monto factura (BCV)</th><th>Plazo</th></tr>
+          <tr><td>Hasta $199</td><td>Contado</td></tr>
+          <tr><td>$200 – $699</td><td><strong>15 días</strong> desde emisión de factura</td></tr>
+          <tr><td>$700 en adelante</td><td><strong>30 días</strong> desde emisión de factura</td></tr>
+        </table>
+      </div>
+      <div class="man-card">
+        <div class="man-h2">Ciclo de pago quincenal</div>
+        <div class="man-body">En cada corte quincenal tienes tres opciones:</div>
+        <ul class="man-ul">
+          <li>Cobrar las comisiones disponibles sobre lo efectivamente cobrado en el período</li>
+          <li>Solicitar un adelanto si tienes comisiones pendientes entre ciclos</li>
+          <li>Acumular para el siguiente corte si prefieres no cobrar en ese momento</li>
+        </ul>
+        <div class="man-body">Informa tu decisión al coordinador antes del cierre del corte.</div>
+      </div>
+      <div class="man-card">
+        <div class="man-h2">Bono plan siembra 90 días</div>
+        <table class="man-table">
+          <tr><th>Clientes aperturados en la semana</th><th>Bono por cliente</th></tr>
+          <tr><td>12 o más</td><td style="color:#0F6E56;font-weight:700">$20 por cliente</td></tr>
+          <tr><td>8 a 11</td><td style="font-weight:700">$15 por cliente</td></tr>
+          <tr><td>6 a 7</td><td style="color:#BA7517;font-weight:700">$10 por cliente</td></tr>
+          <tr><td>Menos de 6</td><td style="color:#A32D2D">Sin bono</td></tr>
+        </table>
+        <div class="man-body" style="font-size:12px;color:var(--muted);margin-top:8px">El bono se acumula con la comisión por venta y cobranza. Vigente los primeros 90 días.</div>
+      </div>
+    </div>
+
+    <!-- ZONIFICACIÓN -->
+    <div class="man-section" id="man-zona">
+      <div class="man-card">
+        <div class="man-h2">Rutas Gran Caracas</div>
+        <table class="man-table">
+          <tr><th>#</th><th>Zona</th><th>Perfil dominante</th><th>Prioridad</th></tr>
+          <tr><td>1</td><td>Oeste – Catia</td><td>Ferreterías B/C, alta rotación mostrador</td><td>Media</td></tr>
+          <tr><td>2</td><td>Centro</td><td>Negocios tradicionales, electricidad</td><td>Media</td></tr>
+          <tr><td>3</td><td>Suroeste – La Yaguara</td><td>Galpones, compra por volumen</td><td style="color:#0F6E56;font-weight:700">Alta</td></tr>
+          <tr><td>4</td><td>Eje Sur</td><td>Ferreterías de comunidad</td><td>Media</td></tr>
+          <tr><td>5</td><td>Eje Financiero</td><td>Constructoras, alto NSE</td><td style="color:#0F6E56;font-weight:700">Alta</td></tr>
+          <tr><td>6</td><td>Industrial – Boleíta</td><td>Epicentro mayorista. Máxima competencia.</td><td style="color:#A32D2D;font-weight:700">Crítica</td></tr>
+          <tr><td>7</td><td>Petare / Mariche</td><td>Ferreterías populares</td><td>Media</td></tr>
+          <tr><td>8</td><td>Baruta / Hatillo</td><td>Alta capacidad de pago en divisas</td><td style="color:#0F6E56;font-weight:700">Alta</td></tr>
+          <tr><td>9</td><td>Guarenas / Guatire</td><td>Grandes ferreterías, depósitos industriales</td><td style="color:#0F6E56;font-weight:700">Alta</td></tr>
+          <tr><td>10</td><td>Altos Mirandinos</td><td>Alto NSE (San Antonio) + Los Teques</td><td>Media</td></tr>
+        </table>
+      </div>
+      <div class="man-card">
+        <div class="man-h2">Tipos de cliente</div>
+        <ul class="man-ul">
+          <li><strong>Tipo A — Gran ferretería o cadena.</strong> Compra en volumen, decide por precio y crédito. Requiere más visitas para cerrar.</li>
+          <li><strong>Tipo B — Ferretería mediana de avenida.</strong> No cierra tan rápido como la Tipo C ni compra tanto volumen como la Tipo A, pero es el cliente que más vale construir: compra con regularidad, tiene capacidad de crédito, y una vez que confía en el proveedor no lo cambia fácilmente. Es el núcleo de una cartera sana.</li>
+          <li><strong>Tipo C — Ferretería pequeña de barrio.</strong> Cierre rápido, montos bajos, alta frecuencia.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- APERTURA -->
+    <div class="man-section" id="man-apertura">
+      <div class="man-highlight">Cada apertura completada = comisión por venta + bono del plan siembra. Hazlo bien desde el principio — un cliente mal abierto genera problemas de crédito y despacho.</div>
+      <div class="man-card">
+        <div class="man-h2">Documentos requeridos</div>
+        <div class="man-body"><strong>Documentación legal y fiscal:</strong></div>
+        <ul class="man-ul">
+          <li>RIF vigente (Registro de Información Fiscal)</li>
+          <li>Copia del Registro Mercantil (acta constitutiva y últimas modificaciones)</li>
+          <li>Cédula de identidad del representante legal</li>
+        </ul>
+        <div class="man-body" style="margin-top:8px"><strong>Logística y operaciones:</strong></div>
+        <ul class="man-ul">
+          <li>Dirección de despacho detallada</li>
+          <li>Teléfono de contacto y correo electrónico</li>
+          <li>Fotografía del establecimiento</li>
+          <li>2 referencias comerciales — pueden ser facturas de proveedores de los últimos 90 días (serán verificadas)</li>
+        </ul>
+      </div>
+      <div class="man-card">
+        <div class="man-h2">Proceso paso a paso</div>
+        <div style="counter-reset:steps">
+          <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
+            <div style="background:var(--g);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">1</div>
+            <div><strong>Primera visita — presentación.</strong> Preséntate, entrega catálogo, identifica al responsable de compras. No pidas documentos si no hay interés.</div>
+          </div>
+          <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
+            <div style="background:var(--g);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">2</div>
+            <div><strong>Envío de información por WhatsApp.</strong> Muchos clientes piden recibir catálogo o condiciones antes de decidir. Envíalo ese mismo día.</div>
+          </div>
+          <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
+            <div style="background:var(--g);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">3</div>
+            <div><strong>Segunda visita — cierre y documentación.</strong> Resuelve objeciones y solicita documentos. Sin documentos: venta de contado, sin crédito.</div>
+          </div>
+          <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
+            <div style="background:var(--g);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">4</div>
+            <div><strong>Envío a facturación.</strong> Envía documentos completos por WhatsApp al <strong>+58 424-6306089</strong>. Sin documentos completos no se procesa.</div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="background:var(--g);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">5</div>
+            <div><strong>Confirmación y primer pedido.</strong> Facturación confirma la apertura. Recién entonces el cliente está activo para pedidos formales.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PEDIDO MANUAL -->
+    <div class="man-section" id="man-pedido-m">
+      <div class="man-card">
+        <div class="man-h2">Información obligatoria en cada pedido</div>
+        <ul class="man-ul">
+          <li>Nombre del cliente y RIF</li>
+          <li>Dirección exacta de despacho</li>
+          <li>Teléfono de contacto para la entrega</li>
+          <li>Productos con código y cantidad</li>
+          <li>Forma de pago (contado / crédito 15d / crédito 30d)</li>
+          <li>Moneda (BCV / divisa)</li>
+          <li>Observaciones: horario de recepción, persona que recibe</li>
+        </ul>
+      </div>
+      <div class="man-card">
+        <div class="man-h2">Canal oficial de pedidos</div>
+        <div class="man-body">Todos los pedidos se envían por WhatsApp a:</div>
+        <div style="text-align:center;font-family:monospace;font-size:22px;font-weight:700;color:var(--g);padding:12px">+58 424-6306089</div>
+      </div>
+      <div class="man-card">
+        <div class="man-h2">Condiciones de despacho</div>
+        <ul class="man-ul">
+          <li>Tiempo de entrega: 5 a 9 días hábiles desde confirmación</li>
+          <li>Flete: 3,5% sobre el valor de la factura, a cargo del cliente</li>
+          <li>Descuento especial: 30% en conexiones de agua para pedidos de 400 piezas o más</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- COBRANZA -->
+    <div class="man-section" id="man-cobranza">
+      <div class="man-highlight">La cobranza no es tarea de administración — es tuya. Tu comisión depende directamente de cobrar a tiempo.</div>
+      <div class="man-card">
+        <div class="man-h2">Protocolo de seguimiento</div>
+        <div style="display:flex;gap:12px;margin-bottom:14px;align-items:flex-start">
+          <div style="background:var(--g);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">1</div>
+          <div><strong>5 días antes del vencimiento.</strong> Primer contacto preventivo. Recuérdale al cliente el monto, la fecha y los datos de pago. No esperes a que llegue el día.</div>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:14px;align-items:flex-start">
+          <div style="background:var(--g);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">2</div>
+          <div><strong>Día del vencimiento.</strong> Confirma si el pago fue realizado. Registra en la app.</div>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:14px;align-items:flex-start">
+          <div style="background:#A32D2D;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">!</div>
+          <div style="background:var(--rl);border-radius:8px;padding:10px;flex:1"><strong style="color:var(--r)">Día 1 post-vencimiento:</strong> el cliente queda bloqueado para nuevos pedidos automáticamente hasta que regularice el pago pendiente.</div>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:14px;align-items:flex-start">
+          <div style="background:var(--a);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">3</div>
+          <div><strong>Días 1 a 6 post-vencimiento.</strong> Seguimiento en días alternos. Tono cordial pero firme. Registra cada contacto.</div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--r);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">4</div>
+          <div><strong>Día 7 en adelante.</strong> Escala al coordinador. La factura comienza a penalizar tu comisión.</div>
+        </div>
+      </div>
+      <div class="man-card">
+        <div class="man-h2">Cuentas de cobro</div>
+        <ul class="man-ul">
+          <li><strong>Bolívares:</strong> Cta. Corriente Mercantil N° 0105-0067-21-1067577335 · RIF J-50273301-9</li>
+          <li><strong>Pago Móvil:</strong> Banco Mercantil · 0414-6645458 · RIF J-502733019</li>
+          <li><strong>Divisas (Bs):</strong> Cta. Mercantil Divisas N° 0105-0067-29-5067110953</li>
+          <li><strong>Internacional / Zelle:</strong> Distrigama Group LLC · JP Morgan Chase · distrigamaventas@gmail.com</li>
+        </ul>
+      </div>
+      <div class="man-card">
+        <div class="man-h2">Argumentos para acelerar el cobro</div>
+        <ul class="man-ul">
+          <li>35% de descuento si paga en divisas — comunícalo antes del vencimiento</li>
+          <li>5% adicional por pronto pago en divisas</li>
+          <li>Pagos tardíos bloquean su crédito desde el día 1 de vencimiento</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- POLÍTICAS -->
+    <div class="man-section" id="man-politicas">
+      <div class="man-card">
+        <div class="man-h2">Para clientes</div>
+        <table class="man-table">
+          <tr><th>Condición</th><th>Detalle</th></tr>
+          <tr><td>Precios</td><td>Referenciados a tasa BCV dólar</td></tr>
+          <tr><td>Crédito 15 días</td><td>Compras desde $200 BCV</td></tr>
+          <tr><td>Crédito 30 días</td><td>Compras desde $700 BCV</td></tr>
+          <tr><td>Flete</td><td>3,5% sobre factura, a cargo del cliente</td></tr>
+          <tr><td>Despacho</td><td>5 a 9 días hábiles</td></tr>
+          <tr><td>Desc. conexiones de agua</td><td>30% desde 400 piezas</td></tr>
+          <tr><td>Desc. pago en divisas</td><td><strong style="color:#0F6E56">35%</strong></td></tr>
+          <tr><td>Desc. pronto pago divisas</td><td><strong style="color:#0F6E56">5% adicional</strong></td></tr>
+          <tr><td>Garantía</td><td>1 año por defecto de fábrica. Se aplica nota de crédito o cambio de producto.</td></tr>
+        </table>
+      </div>
+      <div class="man-card">
+        <div class="man-h2">Para vendedores</div>
+        <ul class="man-ul">
+          <li>No puedes ofrecer condiciones distintas a las publicadas sin autorización</li>
+          <li>Todo pedido va por el canal oficial — ningún pedido verbal sin respaldo escrito</li>
+          <li>La cobranza es tu responsabilidad hasta el escalamiento</li>
+          <li>El reporte diario es condición de supervisión</li>
+          <li>Las metas escalonadas son el umbral mínimo de permanencia</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- METAS -->
+    <div class="man-section" id="man-metas">
+      <div class="man-highlight">Estas metas no son aspiracionales — son el piso mínimo de operación.</div>
+      <div class="man-card">
+        <table class="man-table">
+          <tr><th>Mes</th><th>Meta mínima</th><th>Si no llegas</th><th>Comisión ref.</th></tr>
+          <tr><td>Mes 1</td><td><strong>$3.000</strong></td><td>Conversación de seguimiento</td><td style="color:#0F6E56">~$210 al 7%</td></tr>
+          <tr><td>Mes 2</td><td><strong>$6.000</strong></td><td style="color:#A32D2D">Desvinculación</td><td style="color:#0F6E56">~$420 al 7%</td></tr>
+          <tr><td>Mes 3</td><td><strong>$10.000</strong></td><td style="color:#A32D2D">Desvinculación</td><td style="color:#0F6E56">~$700 al 7%</td></tr>
+        </table>
+      </div>
+      <div class="man-card">
+        <div class="man-h2">Cómo se alcanzan las metas</div>
+        <div class="man-body">El mes 3 no se logra solo con visitas frías. Se logra con cartera activa que recompra — eso es lo que construyes en los primeros 60 días.</div>
+        <table class="man-table" style="margin-top:10px">
+          <tr><th>Meta</th><th>Pedidos a cerrar</th><th>Visitas diarias</th><th>Horas de calle</th></tr>
+          <tr><td>$3.000 / mes 1</td><td>15–20 pedidos</td><td>3–5 visitas</td><td>5–6 horas</td></tr>
+          <tr><td>$6.000 / mes 2</td><td>30–40 pedidos</td><td>4–6 visitas</td><td>6 horas</td></tr>
+          <tr><td>$10.000 / mes 3</td><td>Cartera activa + nuevos</td><td>4–6 visitas</td><td>6 horas</td></tr>
+        </table>
+        <div class="man-body" style="background:var(--al);border-radius:8px;padding:10px;color:var(--a);font-weight:600;margin-top:8px">⚠ Visita efectiva = conversación con el responsable de compras. Sin esa conversación, no cuenta.</div>
+        <div class="man-body" style="margin-top:8px">Si estás teniendo dificultades antes del corte del mes, habla con tu coordinador. No esperes al final.</div>
+      </div>
+    </div>
+
+    <!-- ONBOARDING -->
+    <div class="man-section" id="man-onboarding">
+      <div class="man-card">
+        <table class="man-table">
+          <tr><th>Etapa</th><th>Actividad</th></tr>
+          <tr><td style="color:#0F6E56;font-weight:700">Día 1–2</td><td>Producto y catálogo. Estudias el portafolio. Al día 2 presentas los 30 productos de mayor rotación según tu criterio.</td></tr>
+          <tr><td style="color:#0F6E56;font-weight:700">Día 3</td><td>Condiciones comerciales. Revisión completa de políticas, formato de pedido, cobranza y contactos. Todo por escrito.</td></tr>
+          <tr><td style="color:#0F6E56;font-weight:700">Día 4–5</td><td>Acompañamiento de calle. Sales con supervisión a 4–6 ferreterías. No para ayudarte a vender — para observar cómo lo haces tú.</td></tr>
+          <tr><td style="color:#0F6E56;font-weight:700">Día 6</td><td>Feedback y ajuste. Conversación directa sobre lo observado: lo que está bien y lo que hay que corregir.</td></tr>
+          <tr><td style="color:#0F6E56;font-weight:700">Día 7</td><td>Primera salida solo. Reporte al cierre del día. Desde aquí operas de forma autónoma con supervisión diaria.</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- CONTACTOS -->
+    <div class="man-section" id="man-contactos">
+      <div class="man-card">
+        <div class="man-h2">Directorio de soporte</div>
+        <table class="man-table">
+          <tr><th>Área</th><th>Número</th><th>Canal</th></tr>
+          <tr><td><strong>Coordinador Gran Caracas</strong></td><td style="font-family:monospace">+58 424-2679283</td><td>WhatsApp</td></tr>
+          <tr><td><strong>Facturación / Pedidos</strong></td><td style="font-family:monospace">+58 424-6306089</td><td>WhatsApp</td></tr>
+          <tr><td>Administración</td><td style="font-family:monospace">+58 424-6460142</td><td>WhatsApp</td></tr>
+          <tr><td>Gerencia General</td><td style="font-family:monospace">+58 414-6645458</td><td>WhatsApp</td></tr>
+        </table>
+      </div>
+      <div class="man-card">
+        <div class="man-h2">Cuándo escalar</div>
+        <ul class="man-ul">
+          <li>Factura vencida más de 6 días sin respuesta</li>
+          <li>Reclamo por despacho incorrecto, faltante o producto dañado</li>
+          <li>Solicitud de condiciones fuera de política</li>
+          <li>Cliente solicita factura con datos distintos a los registrados</li>
+          <li>Duda sobre si un cliente califica para crédito</li>
+        </ul>
+      </div>
+      <div class="man-card">
+        <div class="man-h2">Lo que nunca debes hacer solo</div>
+        <ul class="man-ul">
+          <li>Prometer fecha de entrega diferente a 5–9 días hábiles</li>
+          <li>Aceptar pagos en efectivo sin confirmación de administración</li>
+          <li>Modificar montos en el formato de pedido después de enviarlo</li>
+          <li>Dar crédito verbal a un cliente no aperturado formalmente</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- MI DÍA -->
+  <div class="scr" id="scr-dia">
+    <div class="sec-t">Estadísticas del día</div>
+    <div class="stat-row">
+      <div class="stat"><div class="stat-n" id="s-tot">0</div><div class="stat-l">Visitas totales</div></div>
+      <div class="stat"><div class="stat-n" id="s-ped">0</div><div class="stat-l">Pedidos cerrados</div></div>
+      <div class="stat"><div class="stat-n" id="s-ape">0</div><div class="stat-l">Aperturas</div></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="stat-n" style="color:var(--g)" id="s-a">0</div><div class="stat-l">Tipo A</div></div>
+      <div class="stat"><div class="stat-n" style="color:var(--a)" id="s-b">0</div><div class="stat-l">Tipo B</div></div>
+      <div class="stat"><div class="stat-n" style="color:#888" id="s-c">0</div><div class="stat-l">Tipo C</div></div>
+    </div>
+    <div class="sec-t">Reporte para coordinador</div>
+    <div class="report-box"><pre class="report-pre" id="rpt"></pre></div>
+    <button class="btn btn-wa" onclick="sendRpt()">📲 Enviar reporte al coordinador</button>
+  </div>
+</div>
+
+<script type="module">
+// ── FIREBASE CONFIG ──
+// ⚠ REEMPLAZA CON TU CONFIGURACIÓN DE FIREBASE:
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCU1lzx0N9Qm-jKP9ElFrWvR-Uh6etvSuY",
+  authDomain: "distrigama-campo.firebaseapp.com",
+  projectId: "distrigama-campo",
+  storageBucket: "distrigama-campo.firebasestorage.app",
+  messagingSenderId: "835153963795",
+  appId: "1:835153963795:web:a397d9e88ef2edbd0f48e6"
+};
+
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
+  from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, addDoc, collection,
+  query, where, orderBy, onSnapshot, serverTimestamp, updateDoc }
+  from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+const app = initializeApp(FIREBASE_CONFIG);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// ── GLOBAL STATE ──
+const NOW = new Date();
+const FMT_DATE = NOW.toLocaleDateString('es-VE',{day:'2-digit',month:'short',year:'numeric'});
+const FMT_TIME = () => new Date().toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit'});
+window._NOW = NOW; window._FMT_DATE = FMT_DATE; window._FMT_TIME = FMT_TIME;
+
+let currentUser = null;
+let userProfile = null;
+let censo = [];
+let cart = [];
+let disc = 35;
+let moneda = 'USD';
+let selTipo = '';
+let selLineas = [];
+let catFilter = '';
+let gpsCoords = null;
+let notifications = JSON.parse(localStorage.getItem('dg_notifs_v1')||'[]');
+let lastManualVer = localStorage.getItem('dg_manual_ver')||'0';
+
+window._cart = cart;
+
+document.getElementById('hdr-date').textContent = FMT_DATE;
+
+// ── AUTH ──
+window.signInGoogle = async () => {
+  const provider = new GoogleAuthProvider();
+  try { await signInWithPopup(auth, provider); }
+  catch(e) { console.error(e); alert('Error al iniciar sesión: ' + e.message); }
+};
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('setup-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'none';
+    return;
+  }
+  currentUser = user;
+  document.getElementById('login-screen').style.display = 'none';
+  // Check profile
+  const profileRef = doc(db, 'vendedores', user.uid);
+  const snap = await getDoc(profileRef);
+  if (!snap.exists()) {
+    document.getElementById('setup-screen').style.display = 'flex';
+  } else {
+    userProfile = snap.data();
+    startApp();
+  }
+});
+
+window.saveSetup = async () => {
+  const nom = document.getElementById('su-nombre').value.trim();
+  const tel = document.getElementById('su-tel').value.trim();
+  const ruta = document.getElementById('su-ruta').value;
+  if (!nom || !ruta) { fbEl('su-fb','⚠ Nombre y ruta son obligatorios','var(--al)','var(--a)'); return; }
+  const isDirector = currentUser.email === 'itdistrigama@gmail.com'; // cambia por tu email
+  await setDoc(doc(db,'vendedores',currentUser.uid), {
+    nombre: nom, telefono: tel, ruta_principal: ruta,
+    email: currentUser.email, uid: currentUser.uid,
+    rol: isDirector ? 'director' : 'vendedor',
+    activo: true, fecha_registro: serverTimestamp()
+  });
+  userProfile = { nombre: nom, ruta_principal: ruta, rol: isDirector ? 'director' : 'vendedor' };
+  document.getElementById('setup-screen').style.display = 'none';
+  startApp();
+};
+
+function startApp() {
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('hdr-user').textContent = userProfile.nombre + ' · ' + (userProfile.ruta_principal || '');
+  // Pre-fill vendedor in pedido
+  document.getElementById('p-vend').value = userProfile.nombre || '';
+  // Set ruta default in censo
+  const rutaSel = document.getElementById('c-ruta');
+  if (userProfile.ruta_principal) rutaSel.value = userProfile.ruta_principal;
+  // Load today's censo
+  loadCenso();
+  // Listen for manual updates
+  listenManualUpdates();
+  // Listen for notifications
+  renderNotifs();
+  renderProds();
+}
+
+// ── CENSO ──
+async function loadCenso() {
+  const today = NOW.toLocaleDateString('es-VE');
+  const q = query(collection(db,'visitas'),
+    where('vendedor_uid','==',currentUser.uid),
+    where('fecha_str','==',today),
+    orderBy('timestamp','desc'));
+  onSnapshot(q, snap => {
+    censo = snap.docs.map(d => ({id:d.id,...d.data()}));
+    renderCenso();
+  });
+}
+
+window.setTipo = (t) => {
+  selTipo = t;
+  ['A','B','C'].forEach(x => {
+    const el = document.getElementById('t'+x);
+    el.className = 'tipo-btn' + (x===t ? ' on-'+t : '');
+  });
+};
+
+window.tgLinea = (el, n) => {
+  el.classList.toggle('on');
+  selLineas = selLineas.includes(n) ? selLineas.filter(x=>x!==n) : [...selLineas, n];
+};
+
+window.captureGPS = () => {
+  const status = document.getElementById('gps-status');
+  status.textContent = 'Obteniendo ubicación...';
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      gpsCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      status.textContent = `✅ ${gpsCoords.lat.toFixed(5)}, ${gpsCoords.lng.toFixed(5)}`;
+      status.style.color = 'var(--g)';
+    },
+    err => {
+      status.textContent = '⚠ No se pudo obtener GPS: ' + err.message;
+      status.style.color = 'var(--r)';
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+};
+
+window.saveCenso = async () => {
+  const nom = document.getElementById('c-nom').value.trim();
+  if (!nom || !selTipo) { fbEl('c-fb','⚠ Nombre y tipo son obligatorios','var(--al)','var(--a)'); return; }
+  const today = NOW.toLocaleDateString('es-VE');
+  const entry = {
+    nom, tipo: selTipo,
+    contacto_nombre: document.getElementById('c-ctc-nom').value,
+    contacto_telefono: document.getElementById('c-ctc-tel').value,
+    ruta: document.getElementById('c-ruta').value,
+    lineas: [...selLineas],
+    res: document.getElementById('c-res').value,
+    obs: document.getElementById('c-obs').value,
+    lat: gpsCoords?.lat || null,
+    lng: gpsCoords?.lng || null,
+    hora: FMT_TIME(),
+    fecha_str: today,
+    vendedor_uid: currentUser.uid,
+    vendedor_nombre: userProfile.nombre,
+    timestamp: serverTimestamp()
+  };
+  try {
+    await addDoc(collection(db,'visitas'), entry);
+    // reset form
+    ['c-nom','c-ctc-nom','c-ctc-tel','c-obs'].forEach(id=>document.getElementById(id).value='');
+    const rutaDefault = userProfile.ruta_principal || '';
+    document.getElementById('c-ruta').value = rutaDefault;
+    document.getElementById('c-res').value = '';
+    document.querySelectorAll('.chk').forEach(el=>el.classList.remove('on'));
+    selTipo = ''; selLineas = []; gpsCoords = null;
+    ['A','B','C'].forEach(x=>document.getElementById('t'+x).className='tipo-btn');
+    document.getElementById('gps-status').textContent = 'Sin ubicación registrada';
+    document.getElementById('gps-status').style.color = '';
+    fbEl('c-fb','✅ Registro guardado','var(--gl)','var(--g)');
+  } catch(e) {
+    fbEl('c-fb','❌ Error al guardar: ' + e.message,'var(--rl)','var(--r)');
+  }
+};
+
+function renderCenso() {
+  document.getElementById('c-cnt').textContent = censo.length;
+  const cont = document.getElementById('c-list');
+  if (!censo.length) {
+    cont.innerHTML = '<div class="empty"><div class="empty-ico">📋</div><div>Sin registros aún hoy</div></div>';
+    return;
+  }
+  cont.innerHTML = censo.map(e => `
+    <div class="sv-item">
+      <div style="flex:1">
+        <div class="sv-name">${e.nom}<span class="badge ba-${e.tipo}">${e.tipo}</span></div>
+        <div class="sv-meta">${e.ruta||'Sin ruta'} · ${e.hora||''}</div>
+        ${e.contacto_nombre?`<div class="sv-meta">👤 ${e.contacto_nombre}${e.contacto_telefono?' · '+e.contacto_telefono:''}</div>`:''}
+        ${e.lineas?.length?`<div class="sv-meta">🏪 ${e.lineas.join(', ')}</div>`:''}
+        ${e.res?`<div class="sv-meta">📌 ${e.res}</div>`:''}
+        ${e.lat?`<div class="sv-meta"><a href="https://maps.google.com/?q=${e.lat},${e.lng}" target="_blank" style="color:var(--g);font-weight:600">📍 Ver en Maps</a></div>`:''}
+      </div>
+    </div>`).join('');
+}
+
+// ── MANUAL UPDATES ──
+function listenManualUpdates() {
+  onSnapshot(doc(db,'config','manual'), snap => {
+    if (!snap.exists()) return;
+    const data = snap.data();
+    const ver = String(data.version || '0');
+    if (ver !== lastManualVer && lastManualVer !== '0') {
+      // New update
+      const notif = {
+        id: Date.now(),
+        title: '📢 Manual actualizado',
+        body: data.cambio || 'Se actualizó el manual del vendedor',
+        time: FMT_TIME(),
+        read: false
+      };
+      notifications.unshift(notif);
+      localStorage.setItem('dg_notifs_v1', JSON.stringify(notifications));
+      document.getElementById('update-banner').classList.add('on');
+      updateNotifBadge();
+    }
+    lastManualVer = ver;
+    localStorage.setItem('dg_manual_ver', ver);
+  });
+}
+
+// ── NOTIFICATIONS ──
+window.toggleNotif = () => {
+  document.getElementById('notif-panel').classList.toggle('on');
+  renderNotifs();
+};
+
+window.markAllRead = () => {
+  notifications = notifications.map(n => ({...n, read: true}));
+  localStorage.setItem('dg_notifs_v1', JSON.stringify(notifications));
+  updateNotifBadge();
+  renderNotifs();
+};
+
+window.openManual = () => {
+  document.getElementById('update-banner').classList.remove('on');
+  sw('manual');
+};
+
+function updateNotifBadge() {
+  const unread = notifications.filter(n => !n.read).length;
+  const badge = document.getElementById('notif-badge');
+  badge.textContent = unread;
+  badge.style.display = unread > 0 ? 'flex' : 'none';
+}
+
+function renderNotifs() {
+  const list = document.getElementById('notif-list');
+  if (!notifications.length) {
+    list.innerHTML = '<div style="padding:16px;text-align:center;font-size:13px;color:var(--muted)">Sin notificaciones</div>';
+    return;
+  }
+  list.innerHTML = notifications.slice(0,20).map(n => `
+    <div class="notif-item ${n.read?'':'unread'}">
+      <div class="notif-title">${n.title}</div>
+      <div class="notif-body">${n.body}</div>
+      <div class="notif-time">${n.time||''}</div>
+    </div>`).join('');
+}
+
+updateNotifBadge();
+
+// ── TABS ──
+window.sw = (tab) => {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab===tab));
+  document.querySelectorAll('.scr').forEach(s => s.classList.toggle('on', s.id==='scr-'+tab));
+  if (tab==='dia') updDia();
+  if (tab==='pedido') renderProds();
+  if (tab==='manual') document.getElementById('notif-panel').classList.remove('on');
+};
+
+window.showMan = (sec, el) => {
+  document.querySelectorAll('.man-btn').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('.man-section').forEach(s => s.classList.toggle('on', s.id==='man-'+sec));
+};
+
+// ── CATALOGUE ──
+const CAT = [
+  {c:'ADPS-049',n:'Convertidor s/tierra naranja',p:0.49,u:'Min 25 Und',g:'ELECTRICIDAD'},
+  {c:'ADPS-24',n:'Adaptador Benjamin 15A-125V',p:1.22,u:'Paq 24 Pz',g:'ELECTRICIDAD'},
+  {c:'ADPS-70',n:'Adaptador gris 3x2',p:0.88,u:'Paq 36pz',g:'ELECTRICIDAD'},
+  {c:'BR-QC50',n:'Breaker THQC 1P 50A superficial',p:3.20,u:'1pz',g:'ELECTRICIDAD'},
+  {c:'BR-QC60',n:'Breaker THQC 1P 60A superficial',p:3.20,u:'1pz',g:'ELECTRICIDAD'},
+  {c:'BR-THQ-L120',n:'Breaker empotrado 1x20A GDESEO',p:4.07,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'BR-THQ-L130',n:'Breaker empotrado 1x30A GDESEO',p:4.07,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'BR-THQ-L140',n:'Breaker empotrado 1x40A GDESEO',p:4.35,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'BR-THQ-L230',n:'Breaker empotrado 2x30A GDESEO',p:8.13,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'BR-THQ-L240',n:'Breaker empotrado 2x40A GDESEO',p:8.29,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'BR-THQ-L260',n:'Breaker empotrado 2x60A GDESEO',p:8.44,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'CAN-10A',n:'Regleta plástica 12T 10A (x10)',p:15.03,u:'1 Paq',g:'ELECTRICIDAD'},
+  {c:'CAN-15A',n:'Regleta plástica 12T 15A (x10)',p:18.80,u:'1 Paq',g:'ELECTRICIDAD'},
+  {c:'CAN-20A',n:'Regleta plástica 12T 20A (x10)',p:20.48,u:'1 Paq',g:'ELECTRICIDAD'},
+  {c:'GBL-210Z',n:'Cable SPT 100% cobre 2x10 100mts GDESEO',p:326.31,u:'1 Rollo',g:'ELECTRICIDAD'},
+  {c:'GBL-212Z',n:'Cable SPT 100% cobre 2x12 100mts GDESEO',p:217.31,u:'1 Rollo',g:'ELECTRICIDAD'},
+  {c:'GBL-214Z',n:'Cable SPT 100% cobre 2x14 100mts GDESEO',p:139.48,u:'1 Rollo',g:'ELECTRICIDAD'},
+  {c:'GBL-216Z',n:'Cable SPT 100% cobre 2x16 100mts GDESEO',p:89.67,u:'1 Rollo',g:'ELECTRICIDAD'},
+  {c:'GBL-218Z',n:'Cable SPT 100% cobre 2x18 100mts GDESEO',p:58.53,u:'1 Rollo',g:'ELECTRICIDAD'},
+  {c:'ECFS-07',n:'Enchufe amarillo s/tierra 110-125V',p:1.18,u:'Paq 25pz',g:'ELECTRICIDAD'},
+  {c:'ECFS-09',n:'Enchufe amarillo c/tierra 110-125V',p:1.24,u:'Paq 25pz',g:'ELECTRICIDAD'},
+  {c:'ECFS-72',n:'Enchufe negro',p:1.15,u:'Paq 30pz',g:'ELECTRICIDAD'},
+  {c:'EXTG-250',n:'Extensión blanco 2.5 mts',p:3.35,u:'1pz',g:'ELECTRICIDAD'},
+  {c:'EXTG-500',n:'Extensión eléctrica blanco 5 mts',p:4.74,u:'1pz',g:'ELECTRICIDAD'},
+  {c:'GTLS-2',n:'Tablero breaker 2 circuitos c/láminas cobre',p:8.92,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'GTLS-4',n:'Tablero breaker 4 circuitos c/láminas cobre',p:15.89,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'GTLS-6',n:'Tablero breaker 6 circuitos c/láminas cobre',p:19.33,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'GTLS-8',n:'Tablero breaker 8 circuitos c/láminas cobre',p:21.94,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'SEM0001',n:'Interruptor sencillo p/empotrar',p:2.62,u:'10 Und',g:'ELECTRICIDAD'},
+  {c:'SEM0002',n:'Toma corriente doble c/tierra p/emp.',p:3.96,u:'10 Und',g:'ELECTRICIDAD'},
+  {c:'SEM0003',n:'Toma corriente sencillo c/tierra p/emptr',p:2.90,u:'1 Und',g:'ELECTRICIDAD'},
+  {c:'SEM0004',n:'Interruptor doble p/empotrar',p:2.97,u:'10 Und',g:'ELECTRICIDAD'},
+  {c:'SEM0040',n:'Interruptor triple p/empotrar',p:4.43,u:'10 Und',g:'ELECTRICIDAD'},
+  {c:'NRPG-02',n:'Protector 120V 15A nevera/TV/lav.',p:12.47,u:'1pz',g:'ELECTRICIDAD'},
+  {c:'NRPG-04',n:'Protector aire acond 120V 20A 18000BTU',p:17.31,u:'1pz',g:'ELECTRICIDAD'},
+  {c:'NRPG-05',n:'Protector aire acond 220V 20A 36000BTU',p:17.31,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'RGLS-60',n:'Regleta 6 toma corriente c/tierra SEMILIC',p:6.24,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'TYI-S06',n:'Toma corriente c/tierra+2 USB 127-240V',p:14.33,u:'Paq 10pz',g:'ELECTRICIDAD'},
+  {c:'CPP-AB01',n:'Anillo PVC c/rosca 1/2" agua fría',p:0.52,u:'Paq 50pz',g:'PLOMERIA'},
+  {c:'CPP-AB04',n:'Codo 1/2" PVC c/rosca 90° agua fría',p:0.60,u:'Paq 50pz',g:'PLOMERIA'},
+  {c:'CPP-AB07',n:'Tee PVC 1/2" c/rosca agua fría',p:0.83,u:'Paq 50pz',g:'PLOMERIA'},
+  {c:'CPP-AB19',n:'Unión universal c/rosca 1/2" agua fría',p:1.33,u:'Paq 50pz',g:'PLOMERIA'},
+  {c:'CPV-AF04',n:'Codo 1/2" PVC pegar 90° agua fría',p:0.38,u:'Paq 100pz',g:'PLOMERIA'},
+  {c:'CPV-AF07',n:'Tee PVC 1/2" pegar agua fría',p:0.55,u:'Paq 80pz',g:'PLOMERIA'},
+  {c:'LLPS-71',n:'Llave paso 1/2" cuerpo PVC rosca galv.',p:1.87,u:'1 Pz',g:'PLOMERIA'},
+  {c:'LLPS-72',n:'Llave paso 3/4" cuerpo PVC rosca galv.',p:2.53,u:'1 Pz',g:'PLOMERIA'},
+  {c:'LLCM-050',n:'Llave compuerta 1/2" bronce',p:11.49,u:'1 Pz',g:'PLOMERIA'},
+  {c:'LLCM-075',n:'Llave compuerta 3/4" bronce',p:14.98,u:'1 Pz',g:'PLOMERIA'},
+  {c:'LLCM-100',n:'Llave compuerta 1" bronce',p:17.94,u:'1 Pz',g:'PLOMERIA'},
+  {c:'TFLS-W1510',n:'Wokin teflón 1/2" 12mm x 10mts',p:0.39,u:'10pz',g:'PLOMERIA'},
+  {c:'TUB-GD01',n:'Tubo PVC agua fría 1/2" 3mts SCH40',p:6.82,u:'x5 Und Min',g:'PLOMERIA'},
+  {c:'VVCS-24',n:'Válvula check 1/2" bronce vertical',p:6.60,u:'1 Pz',g:'PLOMERIA'},
+  {c:'VVCS-29',n:'Válvula check 3/4" bronce vertical',p:10.02,u:'1 Pz',g:'PLOMERIA'},
+  {c:'VVCS-30',n:'Válvula check 1" bronce vertical',p:12.26,u:'1 Pz',g:'PLOMERIA'},
+  {c:'GALC-04',n:'Codo 90° 1/2" galvanizado',p:0.68,u:'1 Pz',g:'PLOMERIA'},
+  {c:'GALC-05',n:'Codo 90° 3/4" galvanizado',p:1.30,u:'1 Pz',g:'PLOMERIA'},
+  {c:'GALC-07',n:'Tee 1/2" galvanizado',p:1.00,u:'1 Pz',g:'PLOMERIA'},
+  {c:'BOM-W6637',n:'Wokin bomba periférica 1/2HP 100% cobre',p:61.22,u:'1 Pz',g:'BOMBAS'},
+  {c:'IMPS-50',n:'Impeler bomba hidroneumático 1/2HP bronce',p:5.66,u:'1 Und',g:'BOMBAS'},
+  {c:'IMPS-75',n:'Impeler bomba hidroneumático 3/4HP bronce',p:6.12,u:'1 Und',g:'BOMBAS'},
+  {c:'SLLS-50',n:'Sello mecánico bomba 1/2HP (x10)',p:1.27,u:'10pz',g:'BOMBAS'},
+  {c:'SLLS-75',n:'Sello mecánico bomba 3/4HP (x10)',p:2.05,u:'10pz',g:'BOMBAS'},
+  {c:'TNKS-05',n:'Tanque 5 litros rosca macho 1"',p:38.85,u:'1 Und',g:'BOMBAS'},
+  {c:'TNKS-08',n:'Tanque 8 litros rosca macho 1"',p:42.36,u:'1 Und',g:'BOMBAS'},
+  {c:'TNKS-24',n:'Tanque 24 litros rosca macho 1"',p:56.79,u:'1 Und',g:'BOMBAS'},
+  {c:'PRES-240',n:'Presostato 20-40 PSI bomba hidroneumático',p:10.21,u:'1 Und',g:'BOMBAS'},
+  {c:'PRES-350',n:'Presostato 30-50 PSI bomba hidroneumático',p:10.21,u:'1 Und',g:'BOMBAS'},
+  {c:'PRE-C42',n:'Prescontrol 110V/220V 10BAR c/válvula bronce',p:53.22,u:'1 Und',g:'BOMBAS'},
+  {c:'FLO-E03',n:'Flotante eléctrico AC 125V cable 3mts',p:11.51,u:'Min x2pz',g:'BOMBAS'},
+  {c:'FLO-E05',n:'Flotante eléctrico AC 125V cable 5mts',p:14.81,u:'1 Pz',g:'BOMBAS'},
+  {c:'TRGD-100',n:'Tirrap blanco 2.5mm x 100mm (x100)',p:0.92,u:'1 Paq',g:'TIRRAP'},
+  {c:'TRGD-100N',n:'Tirrap negro 2.5mm x 100mm (x100)',p:0.92,u:'1 Paq',g:'TIRRAP'},
+  {c:'TRGD-200',n:'Tirrap blanco 4.6mm x 200mm (x100)',p:3.98,u:'1 Paq',g:'TIRRAP'},
+  {c:'TRGD-200N',n:'Tirrap negro 4.6mm x 200mm (x100)',p:4.51,u:'1 Paq',g:'TIRRAP'},
+  {c:'TRGD-350',n:'Tirrap blanco 4.6mm x 350mm (x100)',p:7.46,u:'1 Paq',g:'TIRRAP'},
+  {c:'TRGD-500',n:'Tirrap blanco 7mm x 500mm (x100)',p:21.40,u:'1 Paq',g:'TIRRAP'},
+  {c:'TRGD-A565',n:'Tirrap acero inox 4.6x200mm (x100)',p:9.88,u:'1 Paq',g:'TIRRAP'},
+  {c:'GPP-201',n:'Grifería PVC fregadero cuello cisne cromado',p:6.35,u:'1 Pz',g:'GRIFERIAS'},
+  {c:'GPP-206',n:'Grifería PVC lavamano monomando cromado',p:5.95,u:'1 Und',g:'GRIFERIAS'},
+  {c:'LLF-G110',n:'Grifería fregadero indiv. cuerpo bronce',p:13.98,u:'1 Und',g:'GRIFERIAS'},
+  {c:'LLL-P140',n:'Llave lavamanos plástico cromado',p:6.55,u:'1 Und',g:'GRIFERIAS'},
+  {c:'FLO-B012',n:'Flotante bronce 1/2"',p:12.70,u:'1 Pz',g:'GRIFERIAS'},
+  {c:'FLO-B034',n:'Flotante bronce 3/4"',p:17.12,u:'1 Pz',g:'GRIFERIAS'},
+  {c:'VPP-301',n:'Llave chorro PVC blanco con pico',p:2.30,u:'1 Und',g:'GRIFERIAS'},
+  {c:'ABRA-06',n:'Abrazadera acero inox 1/4"-1/2" (x25)',p:0.38,u:'25 Pz',g:'ABRAZADERA'},
+  {c:'ABRA-11',n:'Abrazadera acero inox 7/16"-3/4" (x100)',p:0.40,u:'Paq 100pz',g:'ABRAZADERA'},
+  {c:'ABRA-25',n:'Abrazadera acero inox 1"-1.15/32" (x50)',p:0.58,u:'Paq 50pz',g:'ABRAZADERA'},
+  {c:'ABRA-39',n:'Abrazadera acero inox 1.5"-2.25" (x25)',p:1.00,u:'Paq 25pz',g:'ABRAZADERA'},
+  {c:'ABRA-51',n:'Abrazadera acero inox 2"-2.75" (x25)',p:1.13,u:'Paq 25pz',g:'ABRAZADERA'},
+  {c:'ABRH-25',n:'Abrazadera hierro 15/32"-1" (x100)',p:0.22,u:'X 25 Pz',g:'ABRAZADERA'},
+  {c:'GTR-T01',n:'Tirro cinta papel 1/2" x 30mts',p:0.85,u:'12 Pz',g:'ABRAZADERA'},
+  {c:'GTR-T02',n:'Tirro cinta papel 3/4" x 30mts',p:1.27,u:'12 Pz',g:'ABRAZADERA'},
+  {c:'RAM-P01',n:'Ramplug blanco 3/16"x1" (x100)',p:2.78,u:'1 Paq',g:'ABRAZADERA'},
+  {c:'RAM-P02',n:'Ramplug rojo 3/16"x1" (x100)',p:2.93,u:'1 Paq',g:'ABRAZADERA'},
+  {c:'CLV-G120',n:'Clavos dulce c/cabeza 2" 1kg',p:5.50,u:'1 Kl',g:'FERRETERIA'},
+  {c:'CLV-G130',n:'Clavos dulce c/cabeza 3" 1kg',p:5.41,u:'1 Kl',g:'FERRETERIA'},
+  {c:'TRR-331',n:'Tornillo drywall #6x1/2" 1kg',p:8.45,u:'1 Kg',g:'FERRETERIA'},
+  {c:'TRR-333',n:'Tornillo drywall #6x1" 1kg',p:8.45,u:'1 Kg',g:'FERRETERIA'},
+  {c:'TRR-446',n:'Tornillo drywall #8x2" 1kg',p:8.45,u:'1 Kl',g:'FERRETERIA'},
+  {c:'GBR-R74',n:'Brocha 2" mango plástico pelo negro',p:1.70,u:'12pz',g:'FERRETERIA'},
+  {c:'GBR-R76',n:'Brocha 3" mango plástico pelo negro',p:2.72,u:'12 Pz',g:'FERRETERIA'},
+  {c:'GNL-1616',n:'Canaleta PVC 16x16mm 2mts (x15)',p:2.31,u:'X 15 Pz',g:'FERRETERIA'},
+  {c:'GNL-2010',n:'Canaleta PVC 20x10mm 2mts (x15)',p:2.32,u:'X 15 Pz',g:'FERRETERIA'},
+  {c:'REG-G11',n:'Regulador gas clip-on Lengas',p:15.50,u:'1 Pz',g:'FERRETERIA'},
+  {c:'REG-G13',n:'Regulador gas Autogas punta gruesa',p:8.83,u:'1 Pz',g:'FERRETERIA'},
+  {c:'SPRAY-0725',n:'Pintura aerosol 400ml blanco mate',p:2.39,u:'12 Pz',g:'FERRETERIA'},
+  {c:'SPRAY-0726',n:'Pintura aerosol 400ml rojo',p:2.39,u:'12pz',g:'FERRETERIA'},
+  {c:'BRO-B32',n:'Mecha metal 1/8" calibrada (x10)',p:3.88,u:'1 Paq',g:'MECHA'},
+  {c:'BRO-B50',n:'Mecha metal 3/16" calibrada (x10)',p:7.42,u:'1 Paq',g:'MECHA'},
+  {c:'BRO-B65',n:'Mecha metal 1/4" calibrada (x10)',p:11.47,u:'1 Paq',g:'MECHA'},
+  {c:'MEC-T65',n:'Mecha concreto 1/4" calibrada (x10)',p:0.90,u:'x 10pz',g:'MECHA'},
+  {c:'MEC-T75',n:'Mecha concreto 5/16" calibrada (x10)',p:1.42,u:'x 10pz',g:'MECHA'},
+  {c:'MEC-T85',n:'Mecha concreto 3/8" calibrada (x10)',p:1.83,u:'x 10 Pz',g:'MECHA'},
+  {c:'DISC-F02',n:'Disco corte ultrafino cónico 4.5"x1.2" (x10)',p:0.78,u:'x 10 Pz',g:'DISCO'},
+  {c:'DIS-CR41',n:'Disco diamantado ranurado 4.5" húmedo/seco',p:5.05,u:'10 Pz',g:'DISCO'},
+  {c:'DIS-CR43',n:'Disco diamantado segmentado 4.5" en seco',p:4.58,u:'10 Pz',g:'DISCO'},
+  {c:'DISC-E47',n:'Disco desbaste metal 4.5" (x5)',p:1.88,u:'x 5 Pz',g:'DISCO'},
+  {c:'CDD-362',n:'Candado estándar 25mm plateado',p:2.52,u:'1 Pz',g:'CANDADOS'},
+  {c:'CDD-363',n:'Candado estándar 32mm plateado',p:3.20,u:'1 Pz',g:'CANDADOS'},
+  {c:'CDD-364',n:'Candado estándar 40mm plateado',p:4.00,u:'1 Pz',g:'CANDADOS'},
+  {c:'CDD-365',n:'Candado estándar 50mm plateado',p:5.83,u:'1 Pz',g:'CANDADOS'},
+  {c:'CDM-G70',n:'Candado anticizalla acero sólido 70mm',p:8.65,u:'1 Pz',g:'CANDADOS'},
+  {c:'CDM-G80',n:'Candado anticizalla acero sólido 80mm',p:9.75,u:'1 Pz',g:'CANDADOS'},
+  {c:'MAN-H810',n:'Cerradura pomo c/llaves acero inox',p:8.45,u:'1 Pz',g:'CANDADOS'},
+  {c:'MAN-H815',n:'Cerradura pomo c/llaves dorado',p:11.37,u:'1 Pz',g:'CANDADOS'},
+  {c:'BIS-01A',n:'Bisagra hierro 3" p/puertas (x und)',p:1.30,u:'Caj 12 Pz',g:'CANDADOS'},
+  {c:'ALI-M01',n:'Alicate combinado 6" industrial GDESEO',p:6.49,u:'x 2 Pz',g:'HERRAMIENTAS'},
+  {c:'ALI-M02',n:'Alicate combinado 8" industrial GDESEO',p:8.38,u:'x 2 Pz',g:'HERRAMIENTAS'},
+  {c:'LLAV-W0006',n:'Wokin llave ajustable 150mm 6"',p:4.87,u:'Min 2 Pz',g:'HERRAMIENTAS'},
+  {c:'LLAV-W0008',n:'Wokin llave ajustable 8" 200mm',p:5.73,u:'Min 2 Pz',g:'HERRAMIENTAS'},
+  {c:'TAL-1201',n:'Taladro impacto 1/2" 1000W 13mm 110V',p:58.50,u:'1 Und',g:'HERRAMIENTAS'},
+  {c:'ESM-4132',n:'Esmeril profesional 4.5" 800W 110V',p:49.93,u:'1 Pz',g:'HERRAMIENTAS'},
+  {c:'BLGD-A60',n:'Bombillo LED bulbo multivoltage 10W E27',p:1.30,u:'Min 25 Pz',g:'BOMBILLOS'},
+  {c:'BLGD-K71',n:'Bombillo LED bulbo 16W luz amarilla E27',p:1.75,u:'100pz',g:'BOMBILLOS'},
+  {c:'BLGD-R99',n:'Bombillo LED recargable 9W batería lithium',p:3.43,u:'1pz',g:'BOMBILLOS'},
+  {c:'BGD-R30W',n:'Bombillo LED recargable 30W batería lithium',p:6.69,u:'1 Pz',g:'BOMBILLOS'},
+  {c:'RFT-L001',n:'Reflector LED 50W 82-265V GDESEO',p:4.53,u:'10pz',g:'BOMBILLOS'},
+  {c:'RFT-L002',n:'Reflector LED 100W 85-265V GDESEO',p:9.94,u:'12pz',g:'BOMBILLOS'},
+  {c:'PAE-3WCU',n:'Panel LED cuadrado 3W empotrar 6500K',p:1.69,u:'1 Pz',g:'ILUMINACION'},
+  {c:'PAE-6WCU',n:'Panel LED cuadrado 6W empotrar 6500K',p:2.07,u:'1 Pz',g:'ILUMINACION'},
+  {c:'PAE-15WCU',n:'Panel LED cuadrado 15W empotrar 6500K',p:4.13,u:'1 Pz',g:'ILUMINACION'},
+  {c:'PAE-SB18',n:'Panel LED 18W redondo sin bordes empotrar',p:2.09,u:'1pz',g:'ILUMINACION'},
+  {c:'BOM-ALT50',n:'Bombillo LED alta potencia 50W multivoltage',p:10.37,u:'1pz',g:'ILUMINACION'},
+  {c:'BOM-ALT150',n:'Bombillo LED alta potencia 150W multivoltage',p:28.95,u:'1pz',g:'ILUMINACION'},
+];
+
+// ── PEDIDO ──
+window.setMon = (m, el) => {
+  moneda = m;
+  document.getElementById('m-usd').classList.toggle('on', m==='USD');
+  document.getElementById('m-bcv').classList.toggle('on', m==='BCV');
+};
+
+window.fCat = (cat, el) => {
+  catFilter = cat;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  renderProds();
+};
+
+window.renderProds = () => {
+  const srch = (document.getElementById('p-srch')?.value||'').toLowerCase();
+  let list = CAT;
+  if (catFilter) list = list.filter(p => p.g.includes(catFilter));
+  if (srch) list = list.filter(p => p.c.toLowerCase().includes(srch)||p.n.toLowerCase().includes(srch));
+  const inCart = new Set(cart.map(x=>x.c));
+  const el = document.getElementById('p-list');
+  if (!list.length) { el.innerHTML='<div style="padding:18px;text-align:center;color:var(--muted)">Sin resultados</div>'; return; }
+  el.innerHTML = list.slice(0,80).map(p => `
+    <div class="prod-row ${inCart.has(p.c)?'in':''}" onclick="addCart('${p.c}')">
+      <div class="p-code">${p.c}</div>
+      <div><div class="p-name">${p.n}</div><div class="p-unit">${p.u}</div></div>
+      <div class="p-price">$${p.p.toFixed(2)}</div>
+      <button class="p-add" onclick="event.stopPropagation();addCart('${p.c}')">+</button>
+    </div>`).join('');
+};
+
+window.addCart = (code) => {
+  const p = CAT.find(x=>x.c===code); if(!p) return;
+  const ex = cart.find(x=>x.c===code);
+  if(ex) ex.qty++; else cart.push({...p,qty:1});
+  renderCart(); renderProds();
+};
+window.rmCart = (code) => { cart=cart.filter(x=>x.c!==code); renderCart(); renderProds(); };
+window.updQty = (code,v) => { const i=cart.find(x=>x.c===code); if(!i)return; i.qty=Math.max(1,parseInt(v)||1); renderCart(); };
+window.clearCart = () => { cart=[]; renderCart(); renderProds(); };
+window.setDisc = (d, el) => {
+  disc = d;
+  ['d0','d35','d40'].forEach(id => document.getElementById(id).classList.remove('on'));
+  el.classList.add('on'); renderCart();
+};
+
+function renderCart() {
+  const empty = document.getElementById('cart-empty');
+  const card = document.getElementById('cart-card');
+  if (!cart.length) { card.style.display='none'; empty.style.display='block'; return; }
+  card.style.display='block'; empty.style.display='none';
+  document.getElementById('cart-cnt').textContent = cart.length;
+  const sub = cart.reduce((s,i)=>s+i.p*i.qty,0);
+  const dAmt = sub*(disc/100);
+  const after = sub-dAmt;
+  const flete = after*0.035;
+  const total = after+flete;
+  document.getElementById('cart-items').innerHTML = cart.map(i=>`
+    <div class="cart-item">
+      <div><div class="ci-name">${i.n}</div><div class="ci-code">${i.c} · ${i.u}</div></div>
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="updQty('${i.c}',${i.qty-1})">−</button>
+        <input class="qty-in" type="number" value="${i.qty}" min="1" onchange="updQty('${i.c}',this.value)">
+        <button class="qty-btn" onclick="updQty('${i.c}',${i.qty+1})">+</button>
+      </div>
+      <div class="ci-tot">$${(i.p*i.qty).toFixed(2)}</div>
+      <button class="ci-del" onclick="rmCart('${i.c}')">×</button>
+    </div>`).join('');
+  const dl = disc===35?'Descuento −35% (pago divisa)':disc===40?'Descuento −40% (divisa+pronto)':'';
+  document.getElementById('summary').innerHTML=`
+    <div class="sum-row"><span class="sum-lbl">Subtotal (precio BCV)</span><span class="sum-val">$${sub.toFixed(2)}</span></div>
+    ${disc>0?`<div class="sum-row"><span class="sum-lbl">${dl}</span><span class="sum-val" style="color:var(--r)">−$${dAmt.toFixed(2)}</span></div>`:''}
+    <div class="sum-row"><span class="sum-lbl">Subtotal con descuento</span><span class="sum-val">$${after.toFixed(2)}</span></div>
+    <div class="sum-row"><span class="sum-lbl">Flete 3.5%</span><span class="sum-val">$${flete.toFixed(2)}</span></div>
+    <div class="sum-row"><span class="sum-lbl">TOTAL A PAGAR</span><span class="sum-val">$${total.toFixed(2)} ${moneda}</span></div>`;
+}
+
+// ── XLSX GENERATOR ──
+function gc(n){let s='';n++;while(n>0){s=String.fromCharCode(64+(n%26||26))+s;n=Math.floor((n-1)/26);}return s;}
+const XW={
+  _ct:null,_iC(){if(this._ct)return;const t=new Uint32Array(256);for(let i=0;i<256;i++){let c=i;for(let j=0;j<8;j++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[i]=c;}this._ct=t;},
+  _c32(b){this._iC();let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=this._ct[(c^b[i])&0xFF]^(c>>>8);return(c^0xFFFFFFFF)>>>0;},
+  _s2u(s){const b=[];for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);if(c<128)b.push(c);else if(c<2048)b.push(0xC0|(c>>6),0x80|(c&63));else b.push(0xE0|(c>>12),0x80|((c>>6)&63),0x80|(c&63));}return new Uint8Array(b);},
+  _u32(n){return[n&255,(n>>8)&255,(n>>16)&255,(n>>24)&255];},
+  _u16(n){return[n&255,(n>>8)&255];},
+  _zip(files){const en=[];let off=0;const out=[];for(const f of files){const nb=this._s2u(f.name);const crc=this._c32(f.data);const sz=f.data.length;const lh=[0x50,0x4B,0x03,0x04,0x14,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,...this._u32(crc),...this._u32(sz),...this._u32(sz),...this._u16(nb.length),0x00,0x00,...nb];const lo=off;out.push(...lh,...f.data);off+=lh.length+sz;en.push({nb,crc,sz,lo});}const cs=off;for(let i=0;i<files.length;i++){const e=en[i];const cd=[0x50,0x4B,0x01,0x02,0x14,0x00,0x14,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,...this._u32(e.crc),...this._u32(e.sz),...this._u32(e.sz),...this._u16(e.nb.length),0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,...this._u32(e.lo),...e.nb];out.push(...cd);off+=cd.length;}const cdz=off-cs;const eo=[0x50,0x4B,0x05,0x06,0x00,0x00,0x00,0x00,...this._u16(files.length),...this._u16(files.length),...this._u32(cdz),...this._u32(cs),0x00,0x00];out.push(...eo);return new Uint8Array(out);},
+  _e(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');},
+  gen(rows){
+    const strs=[];const si={};
+    const cell=(v,s)=>{if(v===null||v===undefined||v==='')return'';if(typeof v==='number')return`<c r="__A__" t="n"${s!==undefined?` s="${s}"`:''}><v>${v}</v></c>`;const str=String(v);if(!(str in si)){si[str]=strs.length;strs.push(str);}return`<c r="__A__" t="s"${s!==undefined?` s="${s}"`:''}><v>${si[str]}</v></c>`;};
+    let rx='';
+    for(let r=0;r<rows.length;r++){const row=rows[r];if(!row?.length)continue;let cx='';for(let c=0;c<row.length;c++){const item=row[c];const addr=gc(c)+(r+1);let xml;if(item&&typeof item==='object')xml=cell(item.v,item.s);else xml=cell(item,undefined);cx+=xml.replace(/__A__/g,addr);}rx+=`<row r="${r+1}">${cx}</row>`;}
+    const ss=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${strs.length}" uniqueCount="${strs.length}">${strs.map(s=>`<si><t xml:space="preserve">${this._e(s)}</t></si>`).join('')}</sst>`;
+    const st=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="4"><font><sz val="10"/><name val="Arial"/></font><font><b/><sz val="10"/><name val="Arial"/></font><font><b/><sz val="11"/><name val="Arial"/><color rgb="FFFFFFFF"/></font><font><b/><sz val="10"/><name val="Arial"/><color rgb="FF0F6E56"/></font></fonts><fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF0F6E56"/></fgColor></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE1F5EE"/></fgColor></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFAEEDA"/></fgColor></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color auto="1"/></left><right style="thin"><color auto="1"/></right><top style="thin"><color auto="1"/></top><bottom style="thin"><color auto="1"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="8"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0"/><xf numFmtId="0" fontId="2" fillId="2" borderId="0" xfId="0"><alignment horizontal="center"/></xf><xf numFmtId="0" fontId="1" fillId="3" borderId="1" xfId="0"><alignment horizontal="center"/></xf><xf numFmtId="2" fontId="0" fillId="0" borderId="1" xfId="0"/><xf numFmtId="2" fontId="1" fillId="4" borderId="1" xfId="0"/><xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0"><alignment horizontal="right"/></xf><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0"/></cellXfs></styleSheet>`;
+    const ws=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetFormatPr defaultRowHeight="16"/><cols><col min="1" max="1" width="16"/><col min="2" max="2" width="42"/><col min="3" max="3" width="11"/><col min="4" max="4" width="15"/><col min="5" max="5" width="13"/><col min="6" max="6" width="14"/></cols><sheetData>${rx}</sheetData></worksheet>`;
+    const wb=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Pedido" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+    const ct=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`;
+    const rels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+    const wbr=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+    const e=s=>this._s2u(s);
+    return this._zip([{name:'[Content_Types].xml',data:e(ct)},{name:'_rels/.rels',data:e(rels)},{name:'xl/workbook.xml',data:e(wb)},{name:'xl/_rels/workbook.xml.rels',data:e(wbr)},{name:'xl/worksheets/sheet1.xml',data:e(ws)},{name:'xl/sharedStrings.xml',data:e(ss)},{name:'xl/styles.xml',data:e(st)}]);
+  }
+};
+
+function buildXLSX(){
+  const cli=document.getElementById('p-cli').value||'';
+  const tel=document.getElementById('p-tel').value||'';
+  const rif=document.getElementById('p-rif').value||'';
+  const dir=document.getElementById('p-dir').value||'';
+  const vend=document.getElementById('p-vend').value||userProfile?.nombre||'';
+  const cred=document.getElementById('p-cred').value||'Contado';
+  const sub=cart.reduce((s,i)=>s+i.p*i.qty,0);
+  const dAmt=sub*(disc/100);
+  const after=sub-dAmt;
+  const flete=after*0.035;
+  const total=after+flete;
+  const dl=disc===35?'35% - Pago en divisa':disc===40?'40% - Divisa+pronto':'Sin descuento';
+  const H=v=>({v,s:2});const B=v=>({v,s:7});const N=v=>({v:typeof v==='number'?v:0,s:4});const NT=v=>({v:typeof v==='number'?v:0,s:5});
+  const rows=[];
+  rows.push([H('GRUPO DISTRIGAMA 20-22, C.A.')]);
+  rows.push([{v:'RIF: J-50273301-9',s:7}]);
+  rows.push([H('Formato de Pedido')]);
+  rows.push([]);
+  rows.push([B('CLIENTE:'),cli,null,B('VENDEDOR:'),vend]);
+  rows.push([B('TELÉFONO:'),tel,null,B('CIUDAD:'),'CARACAS']);
+  rows.push([B('DOCUMENTO:'),rif,null,B('DÍAS DE CRÉDITO:'),cred]);
+  rows.push([B('DIRECCIÓN:'),dir]);
+  rows.push([B('MONEDA:'),moneda,null,B('DESCUENTO:'),dl]);
+  rows.push([B('FECHA:'),FMT_DATE]);
+  rows.push([]);
+  rows.push([{v:'Código',s:3},{v:'Descripción del Producto',s:3},{v:'Cantidad',s:3},{v:'Tipo Empaque',s:3},{v:'Precio Unit.',s:3},{v:'Total',s:3}]);
+  for(const i of cart) rows.push([{v:i.c,s:1},{v:i.n,s:1},{v:i.qty,s:4},{v:i.u,s:1},N(i.p),N(parseFloat((i.p*i.qty).toFixed(2)))]);
+  rows.push([]);
+  rows.push([null,null,null,null,B('BASE IMPONIBLE'),NT(parseFloat(sub.toFixed(2)))]);
+  if(disc>0) rows.push([null,null,null,null,{v:`DESCUENTO ${disc}%`,s:7},NT(parseFloat((-dAmt).toFixed(2)))]);
+  rows.push([null,null,null,null,B('TRANSPORTE 3.5%'),NT(parseFloat(flete.toFixed(2)))]);
+  rows.push([null,null,null,null,{v:'TOTAL',s:2},NT(parseFloat(total.toFixed(2)))]);
+  rows.push([]);
+  rows.push([{v:'Garantía: 1 año por defecto de fábrica. Nota de crédito o cambio de producto.',s:0}]);
+  return rows;
+}
+
+window.dlXLSX = () => {
+  if(!cart.length){alert('El carrito está vacío');return;}
+  const buf=XW.gen(buildXLSX());
+  const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const cli=document.getElementById('p-cli').value||'Cliente';
+  a.href=url;
+  a.download=`Pedido_Distrigama_${cli.replace(/\s+/g,'_')}_${FMT_DATE.replace(/\//g,'-')}.xlsx`;
+  a.click(); URL.revokeObjectURL(url);
+};
+
+function buildPedTxt(){
+  const cli=document.getElementById('p-cli').value||'—';
+  const tel=document.getElementById('p-tel').value||'—';
+  const rif=document.getElementById('p-rif').value||'—';
+  const dir=document.getElementById('p-dir').value||'—';
+  const vend=document.getElementById('p-vend').value||userProfile?.nombre||'—';
+  const cred=document.getElementById('p-cred').value;
+  const sub=cart.reduce((s,i)=>s+i.p*i.qty,0);
+  const dAmt=sub*(disc/100);
+  const after=sub-dAmt;
+  const flete=after*0.035;
+  const total=after+flete;
+  const dl=disc===35?'Pago en divisa −35%':disc===40?'Divisa+pronto −40%':'Sin descuento';
+  let t=`📦 *PEDIDO DISTRIGAMA · GRAN CARACAS*\n━━━━━━━━━━━━━━━━━━━━\n`;
+  t+=`👤 *Cliente:* ${cli}\n📞 *Tel:* ${tel}  |  *RIF:* ${rif}\n📍 *Dir:* ${dir}\n`;
+  t+=`🏦 *Crédito:* ${cred}  |  *Moneda:* ${moneda}\n👔 *Vendedor:* ${vend}\n━━━━━━━━━━━━━━━━━━━━\n`;
+  cart.forEach(i=>{t+=`• ${i.c} — ${i.n}\n  ${i.qty} × $${i.p.toFixed(2)} = *$${(i.p*i.qty).toFixed(2)}*\n`;});
+  t+=`━━━━━━━━━━━━━━━━━━━━\n💲 Subtotal: $${sub.toFixed(2)}\n`;
+  if(disc>0) t+=`🏷️ ${dl}: −$${dAmt.toFixed(2)}\n`;
+  t+=`🚚 Flete 3.5%: $${flete.toFixed(2)}\n✅ *TOTAL: $${total.toFixed(2)} ${moneda}*\n📅 ${FMT_DATE}`;
+  return t;
+}
+window.copyPed=()=>{if(!cart.length){alert('El carrito está vacío');return;}navigator.clipboard.writeText(buildPedTxt()).then(()=>alert('✅ Copiado'));};
+window.sendWA=()=>{if(!cart.length){alert('El carrito está vacío');return;}window.open(`https://wa.me/584246306089?text=${encodeURIComponent(buildPedTxt())}`,'_blank');};
+
+// ── MI DÍA ──
+function updDia(){
+  const today = NOW.toLocaleDateString('es-VE');
+  const t = censo;
+  document.getElementById('s-tot').textContent=t.length;
+  document.getElementById('s-ped').textContent=t.filter(e=>e.res==='Pedido cerrado').length;
+  document.getElementById('s-ape').textContent=t.filter(e=>e.res==='Apertura en proceso').length;
+  document.getElementById('s-a').textContent=t.filter(e=>e.tipo==='A').length;
+  document.getElementById('s-b').textContent=t.filter(e=>e.tipo==='B').length;
+  document.getElementById('s-c').textContent=t.filter(e=>e.tipo==='C').length;
+  const vend=userProfile?.nombre||'[vendedor]';
+  const ped=t.filter(e=>e.res==='Pedido cerrado').length;
+  const ape=t.filter(e=>e.res==='Apertura en proceso').length;
+  const seg=t.filter(e=>e.res==='Seguimiento pendiente').length;
+  const noi=t.filter(e=>e.res==='No interesado').length;
+  let r=`📊 REPORTE CIERRE DE DÍA\n${FMT_DATE} · Vendedor: ${vend}\n\n`;
+  r+=`📍 Visitas totales: ${t.length}\n✅ Pedidos cerrados: ${ped}\n🔄 Aperturas en proceso: ${ape}\n⏰ Seguimiento pendiente: ${seg}\n❌ No interesados: ${noi}`;
+  if(t.length){r+=`\n\nDETALLE:\n`;t.forEach(e=>{r+=`• ${e.nom} (Tipo ${e.tipo}) — ${e.res||'Sin resultado'}\n`;});}
+  document.getElementById('rpt').textContent=r;
+}
+window.sendRpt=()=>{window.open(`https://wa.me/584242679283?text=${encodeURIComponent(document.getElementById('rpt').textContent)}`,'_blank');};
+
+// ── HELPERS ──
+function fbEl(id,msg,bg,col){
+  const el=document.getElementById(id);
+  el.style.display='block';el.style.background=bg;el.style.color=col;el.textContent=msg;
+  setTimeout(()=>el.style.display='none',2800);
+}
+window.fbEl = fbEl;
+</script>
+</body>
+</html>
