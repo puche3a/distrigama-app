@@ -226,7 +226,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <div id="app" style="display:none">
   <div class="hdr">
     <div>
-      <div class="hdr-l">DISTRIGAMA · GRAN CARACAS</div>
+      <div class="hdr-l">DISTRIGAMA</div>
       <div class="hdr-s" id="hdr-user">Cargando...</div>
     </div>
     <div class="hdr-r">
@@ -1264,11 +1264,20 @@ function renderCart() {
   card.style.display='block'; empty.style.display='none';
   document.getElementById('cart-cnt').textContent = cart.length;
   const sub = cart.reduce((s,i)=>s+i.p*i.qty,0);
-  const dAmt = sub*(disc/100);
-  const after = sub-dAmt;
-  const flete = after*0.035;
-  const total = after+flete;
-  document.getElementById('cart-items').innerHTML = cart.map(i=>`
+  const amt35 = sub * 0.35;
+  const amt40 = sub * 0.40;
+  const after35 = sub - amt35;
+  const after40 = sub - amt40;
+  const flete35 = after35 * 0.035;
+  const flete40 = after40 * 0.035;
+  const total35 = after35 + flete35;
+  const total40 = after40 + flete40;
+  
+  document.getElementById('cart-items').innerHTML = cart.map(i=>{
+    const p_full = i.p*i.qty;
+    const p_35 = p_full * 0.65;
+    const p_40 = p_full * 0.60;
+    return `
     <div class="cart-item">
       <div><div class="ci-name">${i.n}</div><div class="ci-code">${i.c} · ${i.u}</div></div>
       <div class="qty-ctrl">
@@ -1276,16 +1285,36 @@ function renderCart() {
         <input class="qty-in" type="number" value="${i.qty}" min="1" onchange="updQty('${i.c}',this.value)">
         <button class="qty-btn" onclick="updQty('${i.c}',${i.qty+1})">+</button>
       </div>
-      <div class="ci-tot">$${(i.p*i.qty).toFixed(2)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:12px;text-align:right;min-width:150px">
+        <div><small style="color:var(--muted)">Full</small><br>$${p_full.toFixed(2)}</div>
+        <div><small style="color:var(--a)">-35%</small><br>$${p_35.toFixed(2)}</div>
+        <div><small style="color:var(--g)">-40%</small><br>$${p_40.toFixed(2)}</div>
+      </div>
       <button class="ci-del" onclick="rmCart('${i.c}')">×</button>
-    </div>`).join('');
-  const dl = disc===35?'Descuento −35% (pago divisa)':disc===40?'Descuento −40% (divisa+pronto)':'';
+    </div>`;
+  }).join('');
+  
   document.getElementById('summary').innerHTML=`
-    <div class="sum-row"><span class="sum-lbl">Subtotal (precio BCV)</span><span class="sum-val">$${sub.toFixed(2)}</span></div>
-    ${disc>0?`<div class="sum-row"><span class="sum-lbl">${dl}</span><span class="sum-val" style="color:var(--r)">−$${dAmt.toFixed(2)}</span></div>`:''}
-    <div class="sum-row"><span class="sum-lbl">Subtotal con descuento</span><span class="sum-val">$${after.toFixed(2)}</span></div>
-    <div class="sum-row"><span class="sum-lbl">Flete 3.5%</span><span class="sum-val">$${flete.toFixed(2)}</span></div>
-    <div class="sum-row"><span class="sum-lbl">TOTAL A PAGAR</span><span class="sum-val">$${total.toFixed(2)} ${moneda}</span></div>`;
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:13px;font-weight:700;margin:12px 0;padding:12px 0;border-top:2px solid var(--border);border-bottom:2px solid var(--border)">
+      <div style="text-align:center">
+        <div style="color:var(--muted);font-size:11px;font-weight:500;margin-bottom:4px">PRECIO FULL (BCV)</div>
+        <div style="color:var(--text)">$${sub.toFixed(2)}</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:400;margin-top:8px">Flete: $${(sub*0.035).toFixed(2)}</div>
+        <div style="color:var(--g);margin-top:4px">TOTAL: $${(sub + sub*0.035).toFixed(2)}</div>
+      </div>
+      <div style="text-align:center">
+        <div style="color:var(--a);font-size:11px;font-weight:500;margin-bottom:4px">-35% (DIVISA)</div>
+        <div style="color:var(--text)">$${after35.toFixed(2)}</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:400;margin-top:8px">Flete: $${flete35.toFixed(2)}</div>
+        <div style="color:var(--a);margin-top:4px">TOTAL: $${total35.toFixed(2)}</div>
+      </div>
+      <div style="text-align:center">
+        <div style="color:var(--g);font-size:11px;font-weight:500;margin-bottom:4px">-40% (DIVISA+PRONTO)</div>
+        <div style="color:var(--text)">$${after40.toFixed(2)}</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:400;margin-top:8px">Flete: $${flete40.toFixed(2)}</div>
+        <div style="color:var(--g);margin-top:4px">TOTAL: $${total40.toFixed(2)}</div>
+      </div>
+    </div>`;
 }
 
 // ── XLSX GENERATOR ──
@@ -1402,14 +1431,41 @@ window.dlXLSX = async () => {
   const saved = await window.savePedido();
   if(!saved) return;
   
-  const buf=XW.gen(buildXLSX());
-  const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
+  // Generar CSV en lugar de XLSX (más compatible)
   const cli=document.getElementById('p-cli').value||'Cliente';
-  a.href=url;
-  a.download=`Pedido_Distrigama_${cli.replace(/\s+/g,'_')}_${FMT_DATE.replace(/\//g,'-')}.xlsx`;
-  a.click(); URL.revokeObjectURL(url);
+  const tel=document.getElementById('p-tel').value||'';
+  const rif=document.getElementById('p-rif').value||'';
+  const dir=document.getElementById('p-dir').value||'';
+  const vend=document.getElementById('p-vend').value||userProfile?.nombre||'';
+  const cred=document.getElementById('p-cred').value||'';
+  const sub=cart.reduce((s,i)=>s+i.p*i.qty,0);
+  const dAmt=sub*(disc/100);
+  const after=sub-dAmt;
+  const flete=after*0.035;
+  const total=after+flete;
+  
+  let csv = 'GRUPO DISTRIGAMA 20-22, C.A.\nRIF: J-50273301-9\nPEDIDO\n\n';
+  csv += `CLIENTE,${cli}\nTELÉFONO,${tel}\nRIF,${rif}\nDIRECCIÓN,${dir}\n`;
+  csv += `VENDEDOR,${vend}\nCRÉDITO,${cred}\nMONEDA,${moneda}\nFECHA,${FMT_DATE}\n\n`;
+  csv += 'CÓDIGO,DESCRIPCIÓN,CANTIDAD,UNIDAD,PRECIO,TOTAL\n';
+  
+  cart.forEach(i => {
+    csv += `${i.c},"${i.n.replace(/"/g,'""')}",${i.qty},${i.u},$${i.p.toFixed(2)},$${(i.p*i.qty).toFixed(2)}\n`;
+  });
+  
+  csv += '\n,SUBTOTAL,,,,$' + sub.toFixed(2) + '\n';
+  if(disc>0) csv += `,DESCUENTO ${disc}%,,,,-$${dAmt.toFixed(2)}\n`;
+  csv += `,TRANSPORTE 3.5%,,,,$${flete.toFixed(2)}\n`;
+  csv += `,TOTAL,,,,$${total.toFixed(2)} ${moneda}\n\n`;
+  csv += 'GARANTÍA: 1 año por defecto de fábrica. Nota de crédito o cambio de producto.';
+  
+  const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Pedido_Distrigama_${cli.replace(/\s+/g,'_')}_${FMT_DATE.replace(/\//g,'-')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 };
 
 function buildPedTxt(){
@@ -1441,21 +1497,49 @@ window.sendWA=()=>{if(!cart.length){alert('El carrito está vacío');return;}win
 function updDia(){
   const today = NOW.toLocaleDateString('es-VE');
   const t = censo;
+  
+  // Contar visitas
   document.getElementById('s-tot').textContent=t.length;
-  document.getElementById('s-ped').textContent=t.filter(e=>e.res==='Pedido cerrado').length;
-  document.getElementById('s-ape').textContent=t.filter(e=>e.res==='Apertura en proceso').length;
-  document.getElementById('s-a').textContent=t.filter(e=>e.tipo==='A').length;
-  document.getElementById('s-b').textContent=t.filter(e=>e.tipo==='B').length;
-  document.getElementById('s-c').textContent=t.filter(e=>e.tipo==='C').length;
-  const vend=userProfile?.nombre||'[vendedor]';
-  const ped=t.filter(e=>e.res==='Pedido cerrado').length;
-  const ape=t.filter(e=>e.res==='Apertura en proceso').length;
-  const seg=t.filter(e=>e.res==='Seguimiento pendiente').length;
-  const noi=t.filter(e=>e.res==='No interesado').length;
-  let r=`📊 REPORTE CIERRE DE DÍA\n${FMT_DATE} · Vendedor: ${vend}\n\n`;
-  r+=`📍 Visitas totales: ${t.length}\n✅ Pedidos cerrados: ${ped}\n🔄 Aperturas en proceso: ${ape}\n⏰ Seguimiento pendiente: ${seg}\n❌ No interesados: ${noi}`;
-  if(t.length){r+=`\n\nDETALLE:\n`;t.forEach(e=>{r+=`• ${e.nom} (Tipo ${e.tipo}) — ${e.res||'Sin resultado'}\n`;});}
-  document.getElementById('rpt').textContent=r;
+  
+  // Cargar pedidos del día desde Firestore
+  const q = query(collection(db,'pedidos'),
+    where('vendedor_uid','==',currentUser.uid),
+    where('fecha','==',today));
+  
+  onSnapshot(q, snap => {
+    const pedidosHoy = snap.docs.map(d => ({id:d.id,...d.data()}));
+    
+    // Actualizar contadores
+    document.getElementById('s-ped').textContent=pedidosHoy.length;
+    document.getElementById('s-ape').textContent=t.filter(e=>e.res==='Apertura en proceso').length;
+    document.getElementById('s-a').textContent=t.filter(e=>e.tipo==='A').length;
+    document.getElementById('s-b').textContent=t.filter(e=>e.tipo==='B').length;
+    document.getElementById('s-c').textContent=t.filter(e=>e.tipo==='C').length;
+    
+    // Generar reporte
+    const vend=userProfile?.nombre||'[vendedor]';
+    const ped=pedidosHoy.length;
+    const ape=t.filter(e=>e.res==='Apertura en proceso').length;
+    const seg=t.filter(e=>e.res==='Seguimiento pendiente').length;
+    const noi=t.filter(e=>e.res==='No interesado').length;
+    
+    let r=`📊 REPORTE CIERRE DE DÍA\n${FMT_DATE} · Vendedor: ${vend}\n\n`;
+    r+=`📍 Visitas totales: ${t.length}\n✅ Pedidos cerrados: ${ped}\n🔄 Aperturas en proceso: ${ape}\n⏰ Seguimiento pendiente: ${seg}\n❌ No interesados: ${noi}`;
+    
+    if(t.length){
+      r+=`\n\nDETALLE VISITAS:\n`;
+      t.forEach(e=>{r+=`• ${e.nom} (Tipo ${e.tipo}) — ${e.res||'Sin resultado'}\n`;});
+    }
+    
+    if(pedidosHoy.length){
+      r+=`\n\nDETALLE PEDIDOS:\n`;
+      pedidosHoy.forEach(p=>{
+        r+=`• ${p.cliente_nombre} - Total: $${p.total.toFixed(2)} ${p.moneda}\n`;
+      });
+    }
+    
+    document.getElementById('rpt').textContent=r;
+  });
 }
 window.sendRpt=()=>{window.open(`https://wa.me/584242679283?text=${encodeURIComponent(document.getElementById('rpt').textContent)}`,'_blank');};
 
