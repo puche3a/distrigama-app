@@ -1354,8 +1354,55 @@ function buildXLSX(){
   return rows;
 }
 
-window.dlXLSX = () => {
+window.savePedido = async () => {
   if(!cart.length){alert('El carrito está vacío');return;}
+  
+  const cli=document.getElementById('p-cli').value||'';
+  const tel=document.getElementById('p-tel').value||'';
+  const rif=document.getElementById('p-rif').value||'';
+  const dir=document.getElementById('p-dir').value||'';
+  const vend=document.getElementById('p-vend').value||userProfile?.nombre||'';
+  const cred=document.getElementById('p-cred').value;
+  const sub=cart.reduce((s,i)=>s+i.p*i.qty,0);
+  const dAmt=sub*(disc/100);
+  const after=sub-dAmt;
+  const flete=after*0.035;
+  const total=after+flete;
+  
+  try {
+    await addDoc(collection(db,'pedidos'), {
+      cliente_nombre: cli,
+      cliente_telefono: tel,
+      cliente_rif: rif,
+      direccion: dir,
+      vendedor: vend,
+      credito: cred,
+      moneda: moneda,
+      items: cart.map(i=>({codigo:i.c, nombre:i.n, cantidad:i.qty, precio:i.p, subtotal:parseFloat((i.p*i.qty).toFixed(2))})),
+      subtotal: parseFloat(sub.toFixed(2)),
+      descuento: disc,
+      descuento_monto: parseFloat(dAmt.toFixed(2)),
+      subtotal_descuento: parseFloat(after.toFixed(2)),
+      flete: parseFloat(flete.toFixed(2)),
+      total: parseFloat(total.toFixed(2)),
+      fecha: FMT_DATE,
+      vendedor_uid: currentUser.uid,
+      timestamp: serverTimestamp()
+    });
+    console.log('✅ Pedido guardado en Firestore');
+    return true;
+  } catch(e) {
+    console.error('❌ Error al guardar pedido: ' + e.message);
+    alert('Error al guardar el pedido: ' + e.message);
+    return false;
+  }
+};
+
+window.dlXLSX = async () => {
+  if(!cart.length){alert('El carrito está vacío');return;}
+  const saved = await window.savePedido();
+  if(!saved) return;
+  
   const buf=XW.gen(buildXLSX());
   const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   const url=URL.createObjectURL(blob);
