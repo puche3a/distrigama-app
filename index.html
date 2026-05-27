@@ -1174,11 +1174,7 @@ window.sw = (tab) => {
   if (tab==='manual') document.getElementById('notif-panel').classList.remove('on');
 };
 
-window.showMan = (sec, el) => {
-  document.querySelectorAll('.man-btn').forEach(b => b.classList.remove('on'));
-  el.classList.add('on');
-  document.querySelectorAll('.man-section').forEach(s => s.classList.toggle('on', s.id==='man-'+sec));
-};
+
 
 // ── CATALOGUE ──
 const CAT = [
@@ -1667,6 +1663,15 @@ function fbEl(id,msg,bg,col){
   setTimeout(()=>el.style.display='none',2800);
 }
 window.fbEl = fbEl;
+</script>
+
+<!-- FUNCIONES GLOBALES PARA ONCLICK -->
+<script>
+window.showMan = (sec, el) => {
+  document.querySelectorAll('.man-btn').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('.man-section').forEach(s => s.classList.toggle('on', s.id==='man-'+sec));
+};
 </script>
 </body>
 </html>
