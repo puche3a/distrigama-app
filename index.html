@@ -603,9 +603,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         
         <div class="man-body" style="margin-top:12px"><strong>Si hay interés:</strong> "¿Cuándo podríamos cerrar un pedido? Necesitamos RIF y datos del responsable de compras para abrir crédito."</div>
       </div>
+    </div>
 
     <!-- PEDIDO MANUAL -->
-    <!-- ACTUALIZADO: 27-05-2026 18:30 - VERSIÓN v4.3 FINAL -->
     <div class="man-section" id="man-pedido-m">
       <div class="man-card">
         <div class="man-h2">Información obligatoria en cada pedido</div>
@@ -1174,7 +1174,11 @@ window.sw = (tab) => {
   if (tab==='manual') document.getElementById('notif-panel').classList.remove('on');
 };
 
-
+window.showMan = (sec, el) => {
+  document.querySelectorAll('.man-btn').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('.man-section').forEach(s => s.classList.toggle('on', s.id==='man-'+sec));
+};
 
 // ── CATALOGUE ──
 const CAT = [
@@ -1663,15 +1667,6 @@ function fbEl(id,msg,bg,col){
   setTimeout(()=>el.style.display='none',2800);
 }
 window.fbEl = fbEl;
-</script>
-
-<!-- FUNCIONES GLOBALES PARA ONCLICK -->
-<script>
-window.showMan = (sec, el) => {
-  document.querySelectorAll('.man-btn').forEach(b => b.classList.remove('on'));
-  el.classList.add('on');
-  document.querySelectorAll('.man-section').forEach(s => s.classList.toggle('on', s.id==='man-'+sec));
-};
 </script>
 </body>
 </html>
