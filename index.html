@@ -256,8 +256,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <!-- CENSO -->
   <div class="scr on" id="scr-censo">
     <div class="sec-t">Registrar visita</div>
-    <div class="fld"><label>Nombre del local *</label>
-      <input type="text" id="c-nom" placeholder="Ej: Ferretería Central Petare" autocomplete="off"></div>
+    <div class="grid2">
+      <div class="fld"><label>Nombre del local *</label>
+        <input type="text" id="c-nom" placeholder="Ej: Ferretería Central Petare" autocomplete="off"></div>
+      <div class="fld"><label>RIF del local</label>
+        <input type="text" id="c-rif" placeholder="Ej: J-41035545-0" autocomplete="off" onchange="validarRIF()"></div>
+    </div>
     <div class="fld"><label>Tipo de local *</label>
       <div class="grid3">
         <div class="tipo-btn" id="tA" onclick="setTipo('A')"><div class="t">Tipo A</div><div class="s">Gran ferretería</div></div>
@@ -307,11 +311,25 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="fld"><label>Resultado de la visita</label>
       <select id="c-res">
         <option value="">Seleccionar...</option>
-        <option>Pedido cerrado</option>
-        <option>Apertura en proceso</option>
-        <option>Seguimiento pendiente</option>
-        <option>No interesado</option>
-        <option>Solo levantamiento de data</option>
+        <optgroup label="❌ No efectivo">
+          <option>No se encontró responsable</option>
+          <option>Contacto preliminar (WhatsApp/teléfono)</option>
+        </optgroup>
+        <optgroup label="⚠️ Parcialmente efectivo">
+          <option>Presentación inicial (catálogo)</option>
+          <option>Conversación de políticas (sin fecha)</option>
+        </optgroup>
+        <optgroup label="✅ Efectivo (sin cierre)">
+          <option>Visita preliminar completada (fecha acordada)</option>
+          <option>Proposición de pedido (en revisión)</option>
+        </optgroup>
+        <optgroup label="✅✅ Cierre">
+          <option>Pedido cerrado</option>
+        </optgroup>
+        <optgroup label="❌ Rechazos">
+          <option>No interesado (rechazo activo)</option>
+          <option>Competencia presente (cliente satisfecho)</option>
+        </optgroup>
       </select>
     </div>
     <div class="fld"><label>Observaciones</label>
@@ -440,7 +458,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         <div class="man-h2">Categorías de productos</div>
         <ul class="man-ul">
           <li><strong>Productos estándar:</strong> comisión base del 7%. Aplica a la mayoría del portafolio.</li>
-          <li><strong>Productos Wokin:</strong> comisión base del 4%. Aplica exclusivamente a productos con marca Wokin.</li>
+          <li><strong>Productos Wokin:</strong> comisión base del 5%. Aplica exclusivamente a productos con marca Wokin.</li>
         </ul>
       </div>
       <div class="man-card">
@@ -459,6 +477,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         <div class="man-h2">Pago de comisiones</div>
         <div class="man-body">Las comisiones y bonificaciones se pagan al cerrar el cobro de la venta. Quincenalmente se hace un corte de las ventas cobradas y se genera el pago de comisiones. En cada corte el vendedor puede escoger entre acumular o cobrar la comisión.</div>
         <div class="man-body" style="background:var(--al);border-radius:8px;padding:10px;color:var(--a);font-weight:600">💡 Informa tu decisión al coordinador antes del cierre del corte quincenal.</div>
+        <div class="man-body" style="margin-top:12px;background:var(--gl);border-radius:8px;padding:10px;border-left:3px solid var(--g)">
+          <strong style="color:var(--g)">Moneda de pago de comisiones:</strong> La comisión se paga en la misma moneda en que se cobró la venta. Si cobras en divisas (USD), tu comisión se paga en divisas o USDT. Si cobras en Bolívares, tu comisión se paga en VES.
+        </div>
       </div>
       <div class="man-card">
         <div class="man-h2">Bono plan siembra 90 días</div>
@@ -477,19 +498,24 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="man-section" id="man-zona">
       <div class="man-card">
         <div class="man-h2">Rutas Gran Caracas</div>
-        <table class="man-table" style="font-size:12px">
-          <tr><th>#</th><th>Zona</th><th>Principales Sectores y Avenidas Clave</th></tr>
-          <tr><td>1</td><td>Oeste – Catia</td><td>Propatria, Pérez Bonalde, Plaza Sucre, Av. Sucre</td></tr>
-          <tr><td>2</td><td>Centro</td><td>Av. Baralt, Quinta Crespo, La Candelaria, San Bernardino</td></tr>
-          <tr><td>3</td><td>Suroeste – La Yaguara</td><td>Av. San Martín, Zona Industrial La Yaguara, Caricuao, Las Adjuntas</td></tr>
-          <tr><td>4</td><td>Eje Sur</td><td>Los Chaguaramos, Santa Mónica, El Valle, Coche</td></tr>
-          <tr><td>5</td><td>Eje Financiero</td><td>Chacaíto, Chacao, Bello Campo, Altamira, Las Mercedes</td></tr>
-          <tr><td>6</td><td>Industrial – Boleíta</td><td>Boleíta Norte, Boleíta Sur, Los Ruices, Los Cortijos, La Urbina</td></tr>
-          <tr><td>7</td><td>Petare / Mariche</td><td>Casco de Petare, Redoma, Palo Verde, Filas de Mariche</td></tr>
-          <tr><td>8</td><td>Baruta / Hatillo</td><td>Baruta, La Trinidad, El Hatillo, Los Naranjos</td></tr>
-          <tr><td>9</td><td>Guarenas / Guatire</td><td>Av. Intercomunal, Zonas Industriales (Cloris, El Estanque)</td></tr>
-          <tr><td>10</td><td>Altos Mirandinos</td><td>San Antonio de los Altos, Carrizal, Los Teques (Eje Panamericana)</td></tr>
+        <table class="man-table" style="font-size:11px">
+          <tr><th>#</th><th>Zona</th><th>Principales Sectores y Avenidas Clave</th><th>Vendedor Asignado</th><th>Teléfono</th></tr>
+          <tr><td>1</td><td>Oeste – Catia</td><td>Propatria, Pérez Bonalde, Plaza Sucre, Av. Sucre</td><td>Eduardo Gudiño</td><td style="font-family:monospace">+58 412-9268542</td></tr>
+          <tr><td>2</td><td>Centro</td><td>Av. Baralt, Quinta Crespo, La Candelaria, San Bernardino</td><td style="color:var(--muted)">Por asignar</td><td></td></tr>
+          <tr><td>3</td><td>Suroeste – La Yaguara</td><td>Av. San Martín, Zona Industrial La Yaguara, Caricuao, Las Adjuntas</td><td style="color:var(--muted)">Por asignar</td><td></td></tr>
+          <tr><td>4</td><td>Eje Sur</td><td>Los Chaguaramos, Santa Mónica, El Valle, Coche</td><td>Daniela Monasterios</td><td style="font-family:monospace">+58 424-1698003</td></tr>
+          <tr><td>5</td><td>Eje Financiero</td><td>Chacaíto, Chacao, Bello Campo, Altamira, Las Mercedes</td><td>Daniela Monasterios</td><td style="font-family:monospace">+58 424-1698003</td></tr>
+          <tr><td>6</td><td>Industrial – Boleíta</td><td>Boleíta Norte, Boleíta Sur, Los Ruices, Los Cortijos, La Urbina</td><td>Sharon Garcia</td><td style="font-family:monospace">+58 412-2115129</td></tr>
+          <tr><td>7</td><td>Petare / Mariche</td><td>Casco de Petare, Redoma, Palo Verde, Filas de Mariche</td><td>Isaac Durand</td><td style="font-family:monospace">+58 412-5368046</td></tr>
+          <tr><td>8</td><td>Baruta / Hatillo</td><td>Baruta, La Trinidad, El Hatillo, Los Naranjos</td><td style="color:var(--muted)">Por asignar</td><td></td></tr>
+          <tr><td>9</td><td>Guarenas / Guatire</td><td>Av. Intercomunal, Zonas Industriales (Cloris, El Estanque)</td><td>Isaac Durand</td><td style="font-family:monospace">+58 412-5368046</td></tr>
+          <tr><td>10</td><td>Altos Mirandinos</td><td>San Antonio de los Altos, Carrizal, Los Teques (Eje Panamericana)</td><td style="color:var(--muted)">Por asignar</td><td></td></tr>
         </table>
+      </div>
+      <div class="man-card">
+        <div class="man-body" style="background:var(--al);border-radius:8px;padding:10px;border-left:3px solid var(--a)">
+          <strong style="color:var(--a)">📌 REASIGNACIÓN DE CLIENTES:</strong> Si un cliente en tu zona está descuidado, inactivo o sin contacto por más de 30 días, puede ser reasignado a otro vendedor a juicio del coordinador. Mantén activo el seguimiento con todos tus clientes.
+        </div>
       </div>
       <div class="man-card">
         <div class="man-h2">Tipos de cliente</div>
@@ -525,15 +551,15 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         <div style="counter-reset:steps">
           <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
             <div style="background:var(--g);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">1</div>
-            <div><strong>Primera visita — presentación.</strong> Preséntate, entrega catálogo, identifica al responsable de compras. No pidas documentos si no hay interés.</div>
+            <div><strong>Primera visita — presentación.</strong> Preséntate, entrega catálogo, identifica al responsable de compras. <strong>Resultado esperado:</strong> "Presentación inicial (catálogo)" o mejor. No pidas documentos si no hay interés.</div>
           </div>
           <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
             <div style="background:var(--g);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">2</div>
-            <div><strong>Envío de información por WhatsApp.</strong> Muchos clientes piden recibir catálogo o condiciones antes de decidir. Envíalo ese mismo día.</div>
+            <div><strong>Envío de información por WhatsApp.</strong> Muchos clientes piden recibir catálogo o condiciones antes de decidir. Envíalo ese mismo día. <strong>Resultado esperado:</strong> "Conversación de políticas (sin fecha)" o mejor.</div>
           </div>
           <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
             <div style="background:var(--g);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">3</div>
-            <div><strong>Segunda visita — cierre y documentación.</strong> Resuelve objeciones y solicita documentos. Sin documentos: venta de contado, sin crédito.</div>
+            <div><strong>Segunda visita — cierre y documentación.</strong> Resuelve objeciones y solicita documentos. Acuerda una fecha para próxima revisión. <strong>Resultado esperado:</strong> "Visita preliminar completada (fecha acordada)" o "Proposición de pedido (en revisión)". Sin documentos: venta de contado, sin crédito.</div>
           </div>
           <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
             <div style="background:var(--g);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">4</div>
@@ -541,11 +567,42 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
           </div>
           <div style="display:flex;gap:12px;align-items:flex-start">
             <div style="background:var(--g);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">5</div>
-            <div><strong>Confirmación y primer pedido.</strong> Facturación confirma la apertura. Recién entonces el cliente está activo para pedidos formales.</div>
+            <div><strong>Confirmación y primer pedido.</strong> Facturación confirma la apertura. Recién entonces el cliente está activo para pedidos formales. <strong>Resultado:</strong> "Pedido cerrado".</div>
           </div>
         </div>
       </div>
-    </div>
+      <div class="man-card">
+        <div class="man-h2">Speech y metodología de abordaje</div>
+        <div class="man-body"><strong>Entrada al local:</strong></div>
+        <div class="man-body" style="background:var(--al);border-radius:8px;padding:10px;color:var(--a);font-weight:600;margin:10px 0">"Buenos días/tardes. Mi nombre es [tu nombre]. Soy de Distrigama. ¿Puedo hablar con el responsable de compras o gerente?"</div>
+        
+        <div class="man-body" style="margin-top:12px"><strong>Si no hay responsable:</strong> "¿A qué hora puedo encontrarlo?" → Registra "No se encontró responsable"</div>
+        
+        <div class="man-body" style="margin-top:12px"><strong>Si está disponible:</strong></div>
+        <div class="man-body" style="background:var(--al);border-radius:8px;padding:10px;color:var(--a);font-weight:600;margin:10px 0">"Trabajo con Distrigama, una proveedora de electricidad, plomería, herramientas y más. Traigo un catálogo para que conozca nuestras líneas y precios competitivos. ¿Tienen 5 minutos?"</div>
+        
+        <div class="man-body" style="margin-top:12px"><strong>Presentación de catálogo:</strong></div>
+        <ul class="man-ul">
+          <li>Muestra 3-4 líneas principales (electricidad, plomería, herramientas)</li>
+          <li>Destaca: precios en BCV, descuentos por pago en divisa (35%) y pronto pago (40%)</li>
+          <li>Pregunta: "¿Cuáles son las líneas que más vende?"</li>
+          <li>Escucha: identifica necesidades reales</li>
+        </ul>
+        
+        <div class="man-body" style="margin-top:12px"><strong>Cierre de la presentación:</strong></div>
+        <div class="man-body" style="background:var(--al);border-radius:8px;padding:10px;color:var(--a);font-weight:600;margin:10px 0">"Le dejo el catálogo. ¿Puedo dejarle mi teléfono? En 2-3 días le envío nuestras políticas de crédito y descuentos por WhatsApp. ¿Cuál es su número?"</div>
+        
+        <div class="man-body" style="margin-top:12px"><strong>Follow-up por WhatsApp (mismo día):</strong></div>
+        <ul class="man-ul">
+          <li>Envía: catálogo digital, plazos de crédito, descuentos disponibles</li>
+          <li>Mensaje: "Saludos. Aquí le envío la información que hablamos. Cualquier duda, por aquí me comunica."</li>
+        </ul>
+        
+        <div class="man-body" style="margin-top:12px"><strong>Segunda visita (3-5 días después):</strong></div>
+        <div class="man-body" style="background:var(--al);border-radius:8px;padding:10px;color:var(--a);font-weight:600;margin:10px 0">"Vengo a saber si tiene dudas con la información. ¿Está interesado en probar con un pequeño pedido o prefiere seguir pensándolo?"</div>
+        
+        <div class="man-body" style="margin-top:12px"><strong>Si hay interés:</strong> "¿Cuándo podríamos cerrar un pedido? Necesitamos RIF y datos del responsable de compras para abrir crédito."</div>
+      </div>
 
     <!-- PEDIDO MANUAL -->
     <div class="man-section" id="man-pedido-m">
@@ -587,7 +644,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         </div>
         <div style="display:flex;gap:12px;margin-bottom:14px;align-items:flex-start">
           <div style="background:var(--g);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">2</div>
-          <div><strong>Día del vencimiento.</strong> Confirma si el pago fue realizado. Registra en la app.</div>
+          <div><strong>Día del vencimiento.</strong> Confirma si el pago fue realizado. Comunica el pago al equipo de Administración <strong style="color:var(--g)">vía email: distrigamaventas@gmail.com</strong></div>
         </div>
         <div style="display:flex;gap:12px;margin-bottom:14px;align-items:flex-start">
           <div style="background:#A32D2D;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px">!</div>
@@ -612,7 +669,39 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         </ul>
       </div>
       <div class="man-card">
-        <div class="man-h2">Argumentos para acelerar el cobro</div>
+        <div class="man-h2">Procedimiento: Comunicar pago a Administración</div>
+        <div class="man-body" style="margin-bottom:12px"><strong>Cuando recibas confirmación de pago del cliente, envía un email a:</strong></div>
+        <div class="man-body" style="background:var(--al);border-radius:8px;padding:10px;color:var(--a);font-weight:600">distrigamaventas@gmail.com</div>
+        
+        <div class="man-body" style="margin-top:12px"><strong>Asunto del email (elige según aplique):</strong></div>
+        <ul class="man-ul">
+          <li><strong>Si es pago completo:</strong> "Abono Factura XXXX" (Ej: "Abono Factura 2450")</li>
+          <li><strong>Si es pago parcial:</strong> "Finiquito Factura XXXX" (Ej: "Finiquito Factura 2450")</li>
+        </ul>
+        
+        <div class="man-body" style="margin-top:12px"><strong>En el cuerpo del email detalla:</strong></div>
+        <div class="man-body" style="background:var(--gl);border-radius:8px;padding:10px;color:#1A1A1A;font-family:monospace;font-size:12px;margin-top:8px">
+          Cliente: [Nombre Ferretería]<br>
+          RIF: [RIF]<br>
+          Factura: [Número factura]<br>
+          Monto pagado: [X Bolívares]<br>
+          Tasa BCV día: [ej: 2.67]<br>
+          Equivalente en USD: $[X]<br>
+          Método de pago: [Transferencia / Pago Móvil / Efectivo / Zelle]<br>
+          Saldo pendiente: [Si aplica monto faltante]<br>
+          Observaciones: [Si hay]
+        </div>
+        
+        <div class="man-body" style="margin-top:12px"><strong>Adjuntos obligatorios:</strong></div>
+        <ul class="man-ul">
+          <li>Comprobante de pago (captura de pantalla, recibo, tranferencia)</li>
+          <li style="color:var(--muted)">⚠️ Antes de adjuntar, verifica que el comprobante tenga datos correctos de DISTRIGAMA (nombre empresa, RIF, cuenta)</li>
+        </ul>
+        
+        <div class="man-body" style="margin-top:12px;background:var(--rl);border-radius:8px;padding:10px;border-left:3px solid var(--r)">
+          <strong style="color:var(--r)">⚠️ Importante:</strong> Sin comprobante validado, Administración no puede procesar el pago. Verifica que los datos correspondan a Distrigama antes de enviar.
+        </div>
+      </div>
         <ul class="man-ul">
           <li>35% de descuento si paga en divisas — comunícalo antes del vencimiento</li>
           <li>5% adicional por pronto pago en divisas</li>
@@ -680,11 +769,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <div class="man-card">
         <table class="man-table">
           <tr><th>Etapa</th><th>Actividad</th></tr>
-          <tr><td style="color:#0F6E56;font-weight:700">Día 1–2</td><td>Producto y catálogo. Estudias el portafolio. Al día 2 presentas los 30 productos de mayor rotación según tu criterio.</td></tr>
-          <tr><td style="color:#0F6E56;font-weight:700">Día 3</td><td>Condiciones comerciales. Revisión completa de políticas, formato de pedido, cobranza y contactos. Todo por escrito.</td></tr>
-          <tr><td style="color:#0F6E56;font-weight:700">Día 4–5</td><td>Acompañamiento de calle. Sales con supervisión a 4–6 ferreterías. No para ayudarte a vender — para observar cómo lo haces tú.</td></tr>
-          <tr><td style="color:#0F6E56;font-weight:700">Día 6</td><td>Feedback y ajuste. Conversación directa sobre lo observado: lo que está bien y lo que hay que corregir.</td></tr>
-          <tr><td style="color:#0F6E56;font-weight:700">Día 7</td><td>Primera salida solo. Reporte al cierre del día. Desde aquí operas de forma autónoma con supervisión diaria.</td></tr>
+          <tr><td style="color:#0F6E56;font-weight:700">Día 1</td><td><strong>Definir zona.</strong> Revisión de la ruta asignada, identificación de sectores, avenidas clave y competencia principal. Mapeo mental de ferreterías visitables.</td></tr>
+          <tr><td style="color:#0F6E56;font-weight:700">Día 2</td><td><strong>Producto y catálogo.</strong> Estudias el portafolio completo. Identificas los 30-40 productos de mayor rotación según tu zona y tipo de cliente.</td></tr>
+          <tr><td style="color:#0F6E56;font-weight:700">Día 3</td><td><strong>Role Play y abordaje.</strong> Simulación de primeras visitas, presentación, tratamiento de objeciones. Revisión de políticas comerciales, términos de crédito, descuentos y comisiones. Todo por escrito y oral.</td></tr>
+          <tr><td style="color:#0F6E56;font-weight:700">Día 4–5</td><td><strong>Acompañamiento de calle.</strong> Sales con supervisión a 4–6 ferreterías reales. Tu supervisor observa cómo te presentas, cómo hablas, cómo cierras. No interviene — solo observa.</td></tr>
+          <tr><td style="color:#0F6E56;font-weight:700">Día 6</td><td><strong>Feedback y ajuste.</strong> Conversación directa: lo que estuvo bien, lo que hay que mejorar. Correcciones sobre tono, actitud, cierre. Ajustes antes de salir solo.</td></tr>
+          <tr><td style="color:#0F6E56;font-weight:700">Día 7</td><td><strong>Primera salida solo.</strong> Sales tú solo a 6-8 ferreterías. Reporte al cierre del día: cuántas visitas, resultados, próximas acciones. Desde aquí operas con autonomía y supervisión diaria.</td></tr>
         </table>
       </div>
     </div>
@@ -891,14 +981,72 @@ window.captureGPS = () => {
   );
 };
 
+window.normalizarRIF = (rif) => {
+  // Quita guiones, espacios y convierte a mayúsculas
+  return rif.toUpperCase().replace(/[-\s]/g, '').trim();
+};
+
+window.formatearRIF = (rif) => {
+  const limpio = window.normalizarRIF(rif);
+  if (limpio.length !== 10) return limpio; // Inválido
+  // Formato: J-41035545-0
+  return `${limpio.substring(0, 1)}-${limpio.substring(1, 9)}-${limpio.substring(9)}`;
+};
+
+window.validarRIF = async () => {
+  const rifInput = document.getElementById('c-rif');
+  const rif = rifInput.value.trim();
+  if (!rif) return; // Campo vacío es OK
+  
+  const rifNormalizado = window.normalizarRIF(rif);
+  
+  // Validar formato
+  if (rifNormalizado.length !== 10 || !rifNormalizado.match(/^[JVE]/)) {
+    fbEl('c-fb','⚠ RIF inválido. Debe ser: J-41035545-0','var(--al)','var(--a)');
+    return;
+  }
+  
+  // Buscar duplicados en Firestore
+  try {
+    const q = query(collection(db,'visitas'), where('rif_normalizado','==',rifNormalizado));
+    const snap = await getDocs(q);
+    if (snap.docs.length > 0) {
+      const existing = snap.docs[0].data();
+      fbEl('c-fb',`⚠ Este RIF ya está registrado: ${existing.nom}. Verifica si es el mismo local.`,'var(--al)','var(--a)');
+    }
+  } catch(e) {
+    // Silencioso si hay error (base de datos no inicializada aún)
+  }
+  
+  // Mostrar formato correcto
+  rifInput.value = window.formatearRIF(rifNormalizado);
+};
+
 window.saveCenso = async () => {
   const nom = document.getElementById('c-nom').value.trim();
   if (!nom || !selTipo) { fbEl('c-fb','⚠ Nombre y tipo son obligatorios','var(--al)','var(--a)'); return; }
+  
+  // RIF - opcional pero se valida si se proporciona
+  const rifInput = document.getElementById('c-rif').value.trim();
+  let rifNormalizado = null;
+  let rifFormato = null;
+  
+  if (rifInput) {
+    rifNormalizado = window.normalizarRIF(rifInput);
+    if (rifNormalizado.length !== 10 || !rifNormalizado.match(/^[JVE]/)) {
+      fbEl('c-fb','⚠ RIF inválido. Formato: J-41035545-0','var(--al)','var(--a)');
+      return;
+    }
+    rifFormato = window.formatearRIF(rifNormalizado);
+  }
+  
   const today = NOW.toLocaleDateString('es-VE');
   const entry = {
     nom, tipo: selTipo,
     contacto_nombre: document.getElementById('c-ctc-nom').value,
     contacto_telefono: document.getElementById('c-ctc-tel').value,
+    rif_normalizado: rifNormalizado,  // Para búsqueda de duplicados
+    rif_formato: rifFormato,           // Para mostrar al usuario
     ruta: document.getElementById('c-ruta').value,
     lineas: [...selLineas],
     res: document.getElementById('c-res').value,
@@ -914,7 +1062,7 @@ window.saveCenso = async () => {
   try {
     await addDoc(collection(db,'visitas'), entry);
     // reset form
-    ['c-nom','c-ctc-nom','c-ctc-tel','c-obs'].forEach(id=>document.getElementById(id).value='');
+    ['c-nom','c-ctc-nom','c-ctc-tel','c-obs','c-rif'].forEach(id=>document.getElementById(id).value='');
     const rutaDefault = userProfile.ruta_principal || '';
     document.getElementById('c-ruta').value = rutaDefault;
     document.getElementById('c-res').value = '';
