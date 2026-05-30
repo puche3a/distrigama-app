@@ -299,7 +299,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="grid2">
       <div class="fld"><label>Nombre del local *</label>
         <input type="text" id="c-nom" placeholder="Ej: Ferretería Central Petare" autocomplete="off"></div>
-      <div class="fld"><label>RIF del local</label>
+      <div class="fld"><label>RIF del local *</label>
         <input type="text" id="c-rif" placeholder="Ej: J-41035545-0" autocomplete="off" onchange="validarRIF()"></div>
     </div>
     <div class="fld"><label>Tipo de local *</label>
@@ -1330,54 +1330,88 @@ window.validarRIF = async () => {
 
 window.saveCenso = async () => {
   const nom = document.getElementById('c-nom').value.trim();
-  if (!nom || !selTipo) { fbEl('c-fb','⚠ Nombre y tipo son obligatorios','var(--al)','var(--a)'); return; }
-  
-  // RIF - opcional pero se valida si se proporciona
   const rifInput = document.getElementById('c-rif').value.trim();
-  let rifNormalizado = null;
-  let rifFormato = null;
+  if (!nom || !selTipo || !rifInput) { fbEl('c-fb','⚠ Nombre, tipo y RIF son obligatorios','var(--al)','var(--a)'); return; }
   
-  if (rifInput) {
-    rifNormalizado = window.normalizarRIF(rifInput);
-    if (rifNormalizado.length !== 10 || !rifNormalizado.match(/^[JVE]/)) {
-      fbEl('c-fb','⚠ RIF inválido. Formato: J-41035545-0','var(--al)','var(--a)');
+  // Validar RIF
+  const rifNormalizado = window.normalizarRIF(rifInput);
+  if (rifNormalizado.length !== 10 || !rifNormalizado.match(/^[JVE]/)) {
+    fbEl('c-fb','⚠ RIF inválido. Formato: J-41035545-0','var(--al)','var(--a)');
+    return;
+  }
+  const rifFormato = window.formatearRIF(rifNormalizado);
+  
+  // Check if client already exists
+  try {
+    const clienteSnap = await getDoc(doc(db, 'clientes', rifNormalizado));
+    if (clienteSnap.exists()) {
+      const existing = clienteSnap.data();
+      fbEl('c-fb',`⚠ RIF ya registrado: ${existing.nombre}. Búscalo en Cartera.`,'var(--al)','var(--a)');
       return;
     }
-    rifFormato = window.formatearRIF(rifNormalizado);
-  }
+  } catch(e) { console.error('Error checking client:', e); }
   
   const today = NOW.toLocaleDateString('es-VE');
-  const entry = {
-    nom, tipo: selTipo,
-    contacto_nombre: document.getElementById('c-ctc-nom').value,
-    contacto_telefono: document.getElementById('c-ctc-tel').value,
-    rif_normalizado: rifNormalizado,  // Para búsqueda de duplicados
-    rif_formato: rifFormato,           // Para mostrar al usuario
-    ruta: document.getElementById('c-ruta').value,
-    lineas: [...selLineas],
-    res: document.getElementById('c-res').value,
-    obs: document.getElementById('c-obs').value,
-    lat: gpsCoords?.lat || null,
-    lng: gpsCoords?.lng || null,
-    hora: FMT_TIME(),
-    fecha_str: today,
-    vendedor_uid: currentUser.uid,
-    vendedor_nombre: userProfile.nombre,
-    timestamp: serverTimestamp()
-  };
+  const ciudad = userProfile.ciudad || 'caracas';
+  const ruta = document.getElementById('c-ruta').value;
+  
   try {
-    await addDoc(collection(db,'visitas'), entry);
-    // reset form
+    // 1. Create client
+    await setDoc(doc(db, 'clientes', rifNormalizado), {
+      rif_normalizado: rifNormalizado,
+      rif_formato: rifFormato,
+      nombre: nom,
+      tipo: selTipo,
+      contacto_nombre: document.getElementById('c-ctc-nom').value || '',
+      contacto_telefono: document.getElementById('c-ctc-tel').value || '',
+      direccion: '',
+      ciudad: ciudad,
+      ruta: ruta,
+      etapa: 'prospecto',
+      vendedor_uid: currentUser.uid,
+      vendedor_nombre: userProfile.nombre,
+      proxima_accion: '',
+      proxima_accion_fecha: null,
+      fecha_creacion: serverTimestamp(),
+      ultima_visita: serverTimestamp(),
+      total_visitas: 1,
+      total_pedidos: 0,
+      total_cobrado_usd: 0,
+      lineas: [...selLineas]
+    });
+    
+    // 2. Save visita
+    await addDoc(collection(db,'visitas'), {
+      nom, tipo: selTipo,
+      tipo_visita: 'censo_nuevo',
+      contacto_nombre: document.getElementById('c-ctc-nom').value,
+      contacto_telefono: document.getElementById('c-ctc-tel').value,
+      rif_normalizado: rifNormalizado,
+      rif_formato: rifFormato,
+      ruta: ruta,
+      ciudad: ciudad,
+      lineas: [...selLineas],
+      res: document.getElementById('c-res').value,
+      obs: document.getElementById('c-obs').value,
+      lat: gpsCoords?.lat || null,
+      lng: gpsCoords?.lng || null,
+      hora: FMT_TIME(),
+      fecha_str: today,
+      vendedor_uid: currentUser.uid,
+      vendedor_nombre: userProfile.nombre,
+      timestamp: serverTimestamp()
+    });
+    
+    // Reset form
     ['c-nom','c-ctc-nom','c-ctc-tel','c-obs','c-rif'].forEach(id=>document.getElementById(id).value='');
-    const rutaDefault = userProfile.ruta_principal || '';
-    document.getElementById('c-ruta').value = rutaDefault;
+    document.getElementById('c-ruta').value = userProfile.ruta_principal || '';
     document.getElementById('c-res').value = '';
     document.querySelectorAll('.chk').forEach(el=>el.classList.remove('on'));
     selTipo = ''; selLineas = []; gpsCoords = null;
     ['A','B','C'].forEach(x=>document.getElementById('t'+x).className='tipo-btn');
     document.getElementById('gps-status').textContent = 'Sin ubicación registrada';
     document.getElementById('gps-status').style.color = '';
-    fbEl('c-fb','✅ Registro guardado','var(--gl)','var(--g)');
+    fbEl('c-fb','✅ Cliente registrado y censo guardado','var(--gl)','var(--g)');
   } catch(e) {
     fbEl('c-fb','❌ Error al guardar: ' + e.message,'var(--rl)','var(--r)');
   }
@@ -1826,6 +1860,9 @@ window.savePedido = async () => {
       cliente_rif: rif,
       direccion: dir,
       vendedor: vend,
+      vendedor_uid: currentUser.uid,
+      vendedor_nombre: userProfile.nombre,
+      ciudad: userProfile.ciudad || 'caracas',
       credito: cred,
       moneda: moneda,
       items: cart.map(i=>({codigo:i.c, nombre:i.n, cantidad:i.qty, precio:i.p, subtotal:parseFloat((i.p*i.qty).toFixed(2))})),
@@ -1836,7 +1873,6 @@ window.savePedido = async () => {
       flete: parseFloat(flete.toFixed(2)),
       total: parseFloat(total.toFixed(2)),
       fecha: FMT_DATE,
-      vendedor_uid: currentUser.uid,
       timestamp: serverTimestamp()
     });
     console.log('✅ Pedido guardado en Firestore');
