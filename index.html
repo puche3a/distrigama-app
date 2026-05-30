@@ -21,7 +21,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .hdr-r{display:flex;align-items:center;gap:10px}
 .notif-btn{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;position:relative;padding:4px}
 .notif-badge{position:absolute;top:0;right:0;background:#FF5722;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;display:none}
-.tabs{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:52px;z-index:199}
+.tabs{display:flex;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:52px;z-index:199;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1 0 auto;min-width:0}
 .tab{padding:11px 4px;text-align:center;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;transition:all .15s;user-select:none}
 .tab.on{color:var(--g);border-bottom-color:var(--g)}
 .scr{display:none;padding:14px;max-width:960px;margin:0 auto}
@@ -137,6 +139,14 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .man-section.on{display:block}
 .man-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
 .man-highlight{background:var(--gl);border-left:3px solid var(--g);border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:12px;font-size:14px;line-height:1.7;color:var(--g)}
+.coming-soon{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:40px 20px}
+.coming-soon .cs-icon{font-size:64px;margin-bottom:16px;opacity:.6}
+.coming-soon .cs-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:8px}
+.coming-soon .cs-sub{font-size:14px;color:var(--muted);max-width:300px;line-height:1.6;margin-bottom:20px}
+.coming-soon .cs-features{text-align:left;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;max-width:320px;width:100%}
+.coming-soon .cs-features div{padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text)}
+.coming-soon .cs-features div:last-child{border-bottom:none}
+.coming-soon .cs-badge{display:inline-block;background:var(--al);color:var(--a);font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;margin-bottom:16px}
 .man-h2{font-size:16px;font-weight:700;color:var(--text);margin:16px 0 8px}
 .man-h2:first-child{margin-top:0}
 .man-body{font-size:14px;line-height:1.7;color:var(--text);margin-bottom:8px}
@@ -248,9 +258,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
   <div class="tabs">
     <div class="tab on" data-tab="censo" onclick="sw('censo')">📍 Censo</div>
+    <div class="tab" data-tab="cartera" onclick="sw('cartera')">👥 Cartera</div>
     <div class="tab" data-tab="pedido" onclick="sw('pedido')">🛒 Pedido</div>
-    <div class="tab" data-tab="manual" onclick="sw('manual')">📖 Manual</div>
     <div class="tab" data-tab="dia" onclick="sw('dia')">📊 Mi día</div>
+    <div class="tab" data-tab="plan" onclick="sw('plan')">📅 Plan</div>
+    <div class="tab" data-tab="manual" onclick="sw('manual')">📖 Manual</div>
   </div>
 
   <!-- CENSO -->
@@ -340,6 +352,24 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div id="c-list"></div>
   </div>
 
+  <!-- CARTERA DE CLIENTES -->
+  <div class="scr" id="scr-cartera">
+    <div class="coming-soon">
+      <div class="cs-badge">EN DESARROLLO</div>
+      <div class="cs-icon">👥</div>
+      <div class="cs-title">Cartera de clientes</div>
+      <div class="cs-sub">Tu portafolio completo de prospectos y clientes activos. Busca, filtra y gestiona cada relación comercial desde aquí.</div>
+      <div class="cs-features">
+        <div>🔍 Buscar cliente por nombre o RIF</div>
+        <div>📊 Etapas: Prospecto → Contactado → Propuesta → Cliente activo</div>
+        <div>📝 Registrar visitas de seguimiento</div>
+        <div>📌 Próxima acción + fecha de recordatorio</div>
+        <div>📋 Historial completo por cliente</div>
+        <div>📈 Métricas: visitas, pedidos, cobranza</div>
+      </div>
+    </div>
+  </div>
+
   <!-- PEDIDO -->
   <div class="scr" id="scr-pedido">
     <div class="tablet-split">
@@ -414,6 +444,23 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
           </div>
         </div>
         <div id="cart-empty" class="empty"><div class="empty-ico">🛒</div><div style="font-size:14px">Agrega productos al carrito</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAN DE TRABAJO -->
+  <div class="scr" id="scr-plan">
+    <div class="coming-soon">
+      <div class="cs-badge">EN DESARROLLO</div>
+      <div class="cs-icon">📅</div>
+      <div class="cs-title">Plan de trabajo</div>
+      <div class="cs-sub">Planifica tu semana en base a las visitas agendadas. Abre esto el domingo y sabrás exactamente a quién visitar el lunes.</div>
+      <div class="cs-features">
+        <div>📅 Vista semanal de visitas programadas</div>
+        <div>🔔 Recordatorios automáticos por cliente</div>
+        <div>🗺️ Planificación de ruta por zona</div>
+        <div>✅ Marcar actividades completadas</div>
+        <div>📊 Resumen: pendientes vs completadas</div>
       </div>
     </div>
   </div>
