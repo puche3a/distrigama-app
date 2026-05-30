@@ -52,6 +52,36 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .setup-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 24px;width:100%;max-width:400px}
 .setup-title{font-size:18px;font-weight:700;margin-bottom:6px}
 .setup-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+/* WAITING SCREEN */
+#waiting-screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:var(--bg)}
+.waiting-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px 24px;width:100%;max-width:380px;text-align:center}
+.waiting-icon{font-size:56px;margin-bottom:16px;animation:pulse 2s ease-in-out infinite}
+.waiting-title{font-size:20px;font-weight:700;margin-bottom:8px}
+.waiting-sub{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:20px}
+.waiting-email{font-size:12px;color:var(--muted);background:var(--bg);padding:8px 12px;border-radius:8px;margin-bottom:16px;font-family:monospace}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+/* ADMIN PANEL */
+.admin-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.admin-user{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.admin-user:last-child{border-bottom:none}
+.admin-user-info{flex:1}
+.admin-user-name{font-weight:600;font-size:14px}
+.admin-user-email{font-size:12px;color:var(--muted)}
+.admin-user-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.admin-actions{display:flex;gap:6px}
+.btn-sm{padding:6px 12px;border-radius:8px;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-sm-g{background:var(--g);color:#fff}
+.btn-sm-r{background:var(--r);color:#fff}
+.btn-sm-m{background:var(--border);color:var(--text)}
+.admin-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase}
+.badge-director{background:#E8D5FF;color:#7C3AED}
+.badge-coordinador{background:#D5E8FF;color:#2563EB}
+.badge-vendedor{background:var(--gl);color:var(--g)}
+.badge-pendiente{background:var(--al);color:var(--a)}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.on{display:flex}
+.modal-card{background:var(--card);border-radius:16px;padding:24px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto}
 /* COMMON */
 .sec-t{font-family:monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px}
 .sec-t:first-child{margin-top:0}
@@ -207,28 +237,25 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <div id="setup-screen">
   <div class="setup-card">
     <div class="setup-title">Configura tu perfil</div>
-    <div class="setup-sub">Esta información se guarda una sola vez</div>
-    <div class="fld"><label>Tu nombre completo</label>
+    <div class="setup-sub">Esta información se guarda una sola vez. Tu coordinador o director te asignará rol y ruta.</div>
+    <div class="fld"><label>Tu nombre completo *</label>
       <input type="text" id="su-nombre" placeholder="Nombre Apellido" autocomplete="off"></div>
-    <div class="fld"><label>Tu teléfono</label>
+    <div class="fld"><label>Tu teléfono *</label>
       <input type="tel" id="su-tel" placeholder="0414-..." autocomplete="off"></div>
-    <div class="fld"><label>Tu ruta principal</label>
-      <select id="su-ruta">
-        <option value="">Seleccionar...</option>
-        <option>Ruta 1 · Catia</option>
-        <option>Ruta 2 · Centro</option>
-        <option>Ruta 3 · La Yaguara</option>
-        <option>Ruta 4 · Eje Sur</option>
-        <option>Ruta 5 · Eje Financiero</option>
-        <option>Ruta 6 · Boleíta Industrial</option>
-        <option>Ruta 7 · Petare / Mariche</option>
-        <option>Ruta 8 · Baruta / Hatillo</option>
-        <option>Ruta 9 · Guarenas / Guatire</option>
-        <option>Ruta 10 · Altos Mirandinos</option>
-      </select>
-    </div>
-    <button class="btn btn-g" onclick="saveSetup()">Guardar y comenzar</button>
+    <button class="btn btn-g" onclick="saveSetup()">Enviar solicitud</button>
     <div class="fb" id="su-fb"></div>
+  </div>
+</div>
+
+<!-- WAITING SCREEN -->
+<div id="waiting-screen">
+  <div class="waiting-card">
+    <div class="waiting-icon">⏳</div>
+    <div class="waiting-title">Solicitud enviada</div>
+    <div class="waiting-sub">Tu perfil fue creado correctamente. Estás esperando que el Director te autorice y asigne tu rol, ciudad y ruta.</div>
+    <div class="waiting-email" id="waiting-email">...</div>
+    <div class="waiting-sub" style="font-size:12px">Puedes cerrar esta pantalla. Cuando estés autorizado, la app se abrirá automáticamente al iniciar sesión.</div>
+    <button class="btn" style="background:var(--border);color:var(--text);margin-top:8px" onclick="signOutUser()">Cerrar sesión</button>
   </div>
 </div>
 
@@ -263,6 +290,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="tab" data-tab="dia" onclick="sw('dia')">📊 Mi día</div>
     <div class="tab" data-tab="plan" onclick="sw('plan')">📅 Plan</div>
     <div class="tab" data-tab="manual" onclick="sw('manual')">📖 Manual</div>
+    <div class="tab" data-tab="admin" onclick="sw('admin')" id="tab-admin" style="display:none">⚙️ Admin</div>
   </div>
 
   <!-- CENSO -->
@@ -879,6 +907,63 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="report-box"><pre class="report-pre" id="rpt"></pre></div>
     <button class="btn btn-wa" onclick="sendRpt()">📲 Enviar reporte al coordinador</button>
   </div>
+
+  <!-- ADMIN (solo Director) -->
+  <div class="scr" id="scr-admin">
+    <div class="sec-t">Usuarios pendientes de autorización</div>
+    <div id="admin-pending">
+      <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Cargando...</div>
+    </div>
+
+    <div class="sec-t">Equipo activo</div>
+    <div id="admin-active">
+      <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Cargando...</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL: Aprobar usuario -->
+<div class="modal-overlay" id="modal-approve">
+  <div class="modal-card">
+    <div class="setup-title">Aprobar usuario</div>
+    <div class="setup-sub" id="modal-user-info">...</div>
+    <input type="hidden" id="modal-uid">
+    <div class="fld"><label>Rol *</label>
+      <select id="modal-rol">
+        <option value="">Seleccionar...</option>
+        <option value="vendedor">Vendedor</option>
+        <option value="coordinador">Coordinador</option>
+        <option value="director">Director</option>
+      </select>
+    </div>
+    <div class="fld"><label>Ciudad *</label>
+      <select id="modal-ciudad">
+        <option value="">Seleccionar...</option>
+        <option value="caracas">Gran Caracas</option>
+      </select>
+    </div>
+    <div class="fld"><label>Ruta principal</label>
+      <select id="modal-ruta">
+        <option value="">Sin ruta (coordinador/director)</option>
+        <option>Ruta 1 · Catia</option>
+        <option>Ruta 2 · Centro</option>
+        <option>Ruta 3 · La Yaguara</option>
+        <option>Ruta 4 · Eje Sur</option>
+        <option>Ruta 5 · Eje Financiero</option>
+        <option>Ruta 6 · Boleíta Industrial</option>
+        <option>Ruta 7 · Petare / Mariche</option>
+        <option>Ruta 8 · Baruta / Hatillo</option>
+        <option>Ruta 9 · Guarenas / Guatire</option>
+        <option>Ruta 10 · Altos Mirandinos</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-g" style="flex:1" onclick="confirmApprove()">✅ Aprobar</button>
+      <button class="btn" style="flex:1;background:var(--border);color:var(--text)" onclick="closeModal()">Cancelar</button>
+    </div>
+    <div class="fb" id="modal-fb"></div>
+  </div>
 </div>
 
 <script type="module">
@@ -895,7 +980,7 @@ const FIREBASE_CONFIG = {
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
   from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, addDoc, collection,
+import { getFirestore, doc, getDoc, getDocs, setDoc, addDoc, collection,
   query, where, orderBy, onSnapshot, serverTimestamp, updateDoc }
   from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
@@ -933,46 +1018,106 @@ window.signInGoogle = async () => {
   catch(e) { console.error(e); alert('Error al iniciar sesión: ' + e.message); }
 };
 
+window.signOutUser = async () => {
+  await signOut(auth);
+};
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('setup-screen').style.display = 'none';
+    document.getElementById('waiting-screen').style.display = 'none';
     document.getElementById('app').style.display = 'none';
     return;
   }
   currentUser = user;
   document.getElementById('login-screen').style.display = 'none';
-  // Check profile
+  
   const profileRef = doc(db, 'vendedores', user.uid);
   const snap = await getDoc(profileRef);
+  
   if (!snap.exists()) {
+    // No profile → show setup
     document.getElementById('setup-screen').style.display = 'flex';
+    document.getElementById('waiting-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'none';
   } else {
-    userProfile = snap.data();
-    startApp();
+    const data = snap.data();
+    
+    // Migration: if director email but missing autorizado field, auto-authorize
+    if (user.email === 'itdistrigama@gmail.com' && !data.autorizado) {
+      await updateDoc(profileRef, { 
+        autorizado: true, 
+        rol: 'director', 
+        ciudad: data.ciudad || 'caracas' 
+      });
+      data.autorizado = true;
+      data.rol = 'director';
+      data.ciudad = data.ciudad || 'caracas';
+    }
+    
+    if (!data.autorizado) {
+      // Profile exists but NOT authorized → show waiting
+      document.getElementById('setup-screen').style.display = 'none';
+      document.getElementById('waiting-screen').style.display = 'flex';
+      document.getElementById('waiting-email').textContent = user.email;
+      document.getElementById('app').style.display = 'none';
+    } else {
+      // Authorized → start app
+      userProfile = data;
+      document.getElementById('setup-screen').style.display = 'none';
+      document.getElementById('waiting-screen').style.display = 'none';
+      startApp();
+    }
   }
 });
 
 window.saveSetup = async () => {
   const nom = document.getElementById('su-nombre').value.trim();
   const tel = document.getElementById('su-tel').value.trim();
-  const ruta = document.getElementById('su-ruta').value;
-  if (!nom || !ruta) { fbEl('su-fb','⚠ Nombre y ruta son obligatorios','var(--al)','var(--a)'); return; }
-  const isDirector = currentUser.email === 'itdistrigama@gmail.com'; // cambia por tu email
+  if (!nom || !tel) { fbEl('su-fb','⚠ Nombre y teléfono son obligatorios','var(--al)','var(--a)'); return; }
+  
+  const isDirector = currentUser.email === 'itdistrigama@gmail.com';
+  
   await setDoc(doc(db,'vendedores',currentUser.uid), {
-    nombre: nom, telefono: tel, ruta_principal: ruta,
-    email: currentUser.email, uid: currentUser.uid,
-    rol: isDirector ? 'director' : 'vendedor',
-    activo: true, fecha_registro: serverTimestamp()
+    nombre: nom,
+    telefono: tel,
+    email: currentUser.email,
+    uid: currentUser.uid,
+    rol: isDirector ? 'director' : null,
+    ciudad: isDirector ? 'caracas' : '',
+    ruta_principal: '',
+    activo: true,
+    autorizado: isDirector ? true : false,
+    fecha_registro: serverTimestamp()
   });
-  userProfile = { nombre: nom, ruta_principal: ruta, rol: isDirector ? 'director' : 'vendedor' };
-  document.getElementById('setup-screen').style.display = 'none';
-  startApp();
+  
+  if (isDirector) {
+    userProfile = { nombre: nom, rol: 'director', ciudad: 'caracas', ruta_principal: '', autorizado: true };
+    document.getElementById('setup-screen').style.display = 'none';
+    startApp();
+  } else {
+    document.getElementById('setup-screen').style.display = 'none';
+    document.getElementById('waiting-screen').style.display = 'flex';
+    document.getElementById('waiting-email').textContent = currentUser.email;
+  }
 };
 
 function startApp() {
   document.getElementById('app').style.display = 'block';
-  document.getElementById('hdr-user').textContent = userProfile.nombre + ' · ' + (userProfile.ruta_principal || '');
+  
+  const rolLabel = userProfile.rol === 'director' ? '👑 Director' : 
+                   userProfile.rol === 'coordinador' ? '📋 Coordinador' : '🏃 Vendedor';
+  document.getElementById('hdr-user').textContent = userProfile.nombre + ' · ' + rolLabel;
+  
+  // Show/hide Admin tab based on role
+  const adminTab = document.getElementById('tab-admin');
+  if (userProfile.rol === 'director') {
+    adminTab.style.display = '';
+  } else {
+    adminTab.style.display = 'none';
+  }
+  
   // Pre-fill vendedor in pedido
   document.getElementById('p-vend').value = userProfile.nombre || '';
   // Set ruta default in censo
@@ -986,6 +1131,118 @@ function startApp() {
   renderNotifs();
   renderProds();
 }
+
+// ── ADMIN FUNCTIONS ──
+async function loadAdminPanel() {
+  if (userProfile.rol !== 'director') return;
+  
+  // Load ALL vendedores
+  const snap = await getDocs(collection(db, 'vendedores'));
+  const pending = [];
+  const active = [];
+  
+  snap.forEach(d => {
+    const data = { id: d.id, ...d.data() };
+    if (!data.autorizado) pending.push(data);
+    else active.push(data);
+  });
+  
+  // Render pending
+  const pendingEl = document.getElementById('admin-pending');
+  if (pending.length === 0) {
+    pendingEl.innerHTML = '<div class="admin-card" style="text-align:center;color:var(--muted);font-size:13px">✅ No hay solicitudes pendientes</div>';
+  } else {
+    pendingEl.innerHTML = pending.map(u => `
+      <div class="admin-card">
+        <div class="admin-user">
+          <div class="admin-user-info">
+            <div class="admin-user-name">${u.nombre || 'Sin nombre'} <span class="admin-badge badge-pendiente">Pendiente</span></div>
+            <div class="admin-user-email">${u.email}</div>
+            <div class="admin-user-meta">Tel: ${u.telefono || '—'} · Registrado: ${u.fecha_registro ? new Date(u.fecha_registro.seconds*1000).toLocaleDateString('es-VE') : '—'}</div>
+          </div>
+          <div class="admin-actions">
+            <button class="btn-sm btn-sm-g" onclick="openApproveModal('${u.id}','${u.nombre || ''}','${u.email}')">Aprobar</button>
+            <button class="btn-sm btn-sm-r" onclick="rejectUser('${u.id}')">Rechazar</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  // Render active
+  const activeEl = document.getElementById('admin-active');
+  if (active.length === 0) {
+    activeEl.innerHTML = '<div class="admin-card" style="text-align:center;color:var(--muted);font-size:13px">No hay usuarios activos</div>';
+  } else {
+    activeEl.innerHTML = active.map(u => {
+      const badgeClass = u.rol === 'director' ? 'badge-director' : u.rol === 'coordinador' ? 'badge-coordinador' : 'badge-vendedor';
+      const rolLabel = u.rol === 'director' ? 'Director' : u.rol === 'coordinador' ? 'Coordinador' : 'Vendedor';
+      return `
+      <div class="admin-card">
+        <div class="admin-user">
+          <div class="admin-user-info">
+            <div class="admin-user-name">${u.nombre} <span class="admin-badge ${badgeClass}">${rolLabel}</span></div>
+            <div class="admin-user-email">${u.email}</div>
+            <div class="admin-user-meta">Ciudad: ${u.ciudad || '—'} · Ruta: ${u.ruta_principal || '—'} · Tel: ${u.telefono || '—'}</div>
+          </div>
+          <div class="admin-actions">
+            <button class="btn-sm btn-sm-m" onclick="openApproveModal('${u.id}','${u.nombre}','${u.email}')">Editar</button>
+          </div>
+        </div>
+      </div>
+    `}).join('');
+  }
+}
+
+window.openApproveModal = (uid, nombre, email) => {
+  document.getElementById('modal-uid').value = uid;
+  document.getElementById('modal-user-info').textContent = nombre + ' (' + email + ')';
+  document.getElementById('modal-rol').value = '';
+  document.getElementById('modal-ciudad').value = '';
+  document.getElementById('modal-ruta').value = '';
+  document.getElementById('modal-approve').classList.add('on');
+};
+
+window.closeModal = () => {
+  document.getElementById('modal-approve').classList.remove('on');
+};
+
+window.confirmApprove = async () => {
+  const uid = document.getElementById('modal-uid').value;
+  const rol = document.getElementById('modal-rol').value;
+  const ciudad = document.getElementById('modal-ciudad').value;
+  const ruta = document.getElementById('modal-ruta').value;
+  
+  if (!rol || !ciudad) {
+    fbEl('modal-fb','⚠ Rol y ciudad son obligatorios','var(--al)','var(--a)');
+    return;
+  }
+  
+  try {
+    await updateDoc(doc(db, 'vendedores', uid), {
+      rol: rol,
+      ciudad: ciudad,
+      ruta_principal: ruta,
+      autorizado: true,
+      activo: true
+    });
+    closeModal();
+    loadAdminPanel(); // Refresh
+  } catch(e) {
+    fbEl('modal-fb','❌ Error: ' + e.message,'var(--rl)','var(--r)');
+  }
+};
+
+window.rejectUser = async (uid) => {
+  if (!confirm('¿Seguro que deseas rechazar este usuario? Se eliminará su perfil.')) return;
+  try {
+    const { deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    await deleteDoc(doc(db, 'vendedores', uid));
+    loadAdminPanel();
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+};
 
 // ── CENSO ──
 async function loadCenso() {
@@ -1219,6 +1476,7 @@ window.sw = (tab) => {
   if (tab==='dia') updDia();
   if (tab==='pedido') renderProds();
   if (tab==='manual') document.getElementById('notif-panel').classList.remove('on');
+  if (tab==='admin') loadAdminPanel();
 };
 
 window.showMan = (sec, el) => {
