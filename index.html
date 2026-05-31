@@ -284,7 +284,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   </div>
 
   <div class="tabs">
-    <div class="tab on" data-tab="censo" onclick="sw('censo')">📍 Censo</div>
+    <div class="tab on" data-tab="censo" onclick="sw('censo')">📍 Prospección</div>
     <div class="tab" data-tab="cartera" onclick="sw('cartera')">👥 Cartera</div>
     <div class="tab" data-tab="pedido" onclick="sw('pedido')">🛒 Pedido</div>
     <div class="tab" data-tab="dia" onclick="sw('dia')">📊 Mi día</div>
@@ -295,7 +295,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
   <!-- CENSO -->
   <div class="scr on" id="scr-censo">
-    <div class="sec-t">Registrar visita</div>
+    <div class="sec-t">Registrar prospecto</div>
     <div class="grid2">
       <div class="fld"><label>Nombre del local *</label>
         <input type="text" id="c-nom" placeholder="Ej: Ferretería Central Petare" autocomplete="off"></div>
@@ -390,7 +390,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <div class="cs-features">
         <div>🔍 Buscar cliente por nombre o RIF</div>
         <div>📊 Etapas: Prospecto → Contactado → Propuesta → Cliente activo</div>
-        <div>📝 Registrar visitas de seguimiento</div>
+        <div>📝 Registrar prospectos de seguimiento</div>
         <div>📌 Próxima acción + fecha de recordatorio</div>
         <div>📋 Historial completo por cliente</div>
         <div>📈 Métricas: visitas, pedidos, cobranza</div>
@@ -659,7 +659,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         <div class="man-body" style="margin-top:12px"><strong>Presentación de catálogo:</strong></div>
         <ul class="man-ul">
           <li>Muestra 3-4 líneas principales (electricidad, plomería, herramientas)</li>
-          <li>Destaca: precios en BCV, descuentos por pago en divisa (35%) y pronto pago (40%)</li>
+          <li>Destaca: precios en BCV, descuentos por pago en divisa (35%) y pronto pago (+5% adicional)</li>
           <li>Pregunta: "¿Cuáles son las líneas que más vende?"</li>
           <li>Escucha: identifica necesidades reales</li>
         </ul>
@@ -1744,7 +1744,7 @@ function renderCart() {
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:12px;text-align:right;min-width:150px">
         <div><small style="color:var(--muted)">Full</small><br>$${p_full.toFixed(2)}</div>
         <div><small style="color:var(--a)">-35%</small><br>$${p_35.toFixed(2)}</div>
-        <div><small style="color:var(--g)">-40%</small><br>$${p_40.toFixed(2)}</div>
+        <div><small style="color:var(--g)">-35%+5%</small><br>$${p_40.toFixed(2)}</div>
       </div>
       <button class="ci-del" onclick="rmCart('${i.c}')">×</button>
     </div>`;
@@ -1765,7 +1765,7 @@ function renderCart() {
         <div style="color:var(--a);margin-top:4px">TOTAL: $${total35.toFixed(2)}</div>
       </div>
       <div style="text-align:center">
-        <div style="color:var(--g);font-size:11px;font-weight:500;margin-bottom:4px">-40% (DIVISA+PRONTO)</div>
+        <div style="color:var(--g);font-size:11px;font-weight:500;margin-bottom:4px">-35%+5% (DIVISA+PRONTO)</div>
         <div style="color:var(--text)">$${after40.toFixed(2)}</div>
         <div style="font-size:11px;color:var(--muted);font-weight:400;margin-top:8px">Flete: $${flete40.toFixed(2)}</div>
         <div style="color:var(--g);margin-top:4px">TOTAL: $${total40.toFixed(2)}</div>
@@ -1808,11 +1808,11 @@ function buildXLSX(){
   const vend=document.getElementById('p-vend').value||userProfile?.nombre||'';
   const cred=document.getElementById('p-cred').value||'Contado';
   const sub=cart.reduce((s,i)=>s+i.p*i.qty,0);
-  const dAmt=sub*(disc/100);
+  const dAmt = disc===40 ? sub*0.35 + (sub*0.65)*0.05 : sub*(disc/100);
   const after=sub-dAmt;
   const flete=after*0.035;
   const total=after+flete;
-  const dl=disc===35?'35% - Pago en divisa':disc===40?'40% - Divisa+pronto':'Sin descuento';
+  const dl=disc===35?'35% - Pago en divisa':disc===40?'35%+5% - Divisa+pronto pago':'Sin descuento';
   const H=v=>({v,s:2});const B=v=>({v,s:7});const N=v=>({v:typeof v==='number'?v:0,s:4});const NT=v=>({v:typeof v==='number'?v:0,s:5});
   const rows=[];
   rows.push([H('GRUPO DISTRIGAMA 20-22, C.A.')]);
@@ -1848,7 +1848,7 @@ window.savePedido = async () => {
   const vend=document.getElementById('p-vend').value||userProfile?.nombre||'';
   const cred=document.getElementById('p-cred').value;
   const sub=cart.reduce((s,i)=>s+i.p*i.qty,0);
-  const dAmt=sub*(disc/100);
+  const dAmt = disc===40 ? sub*0.35 + (sub*0.65)*0.05 : sub*(disc/100);
   const after=sub-dAmt;
   const flete=after*0.035;
   const total=after+flete;
@@ -1875,6 +1875,46 @@ window.savePedido = async () => {
       fecha: FMT_DATE,
       timestamp: serverTimestamp()
     });
+    
+    // Auto-create client if RIF provided and not in clientes
+    if (rif) {
+      const rifNorm = window.normalizarRIF ? window.normalizarRIF(rif) : rif.replace(/[-\s]/g,'');
+      try {
+        const cSnap = await getDoc(doc(db, 'clientes', rifNorm));
+        if (!cSnap.exists()) {
+          await setDoc(doc(db, 'clientes', rifNorm), {
+            rif_normalizado: rifNorm,
+            rif_formato: window.formatearRIF ? window.formatearRIF(rifNorm) : rif,
+            nombre: cli,
+            tipo: '',
+            contacto_nombre: '',
+            contacto_telefono: tel,
+            direccion: dir,
+            ciudad: userProfile.ciudad || 'caracas',
+            ruta: userProfile.ruta_principal || '',
+            etapa: 'cliente_activo',
+            vendedor_uid: currentUser.uid,
+            vendedor_nombre: userProfile.nombre,
+            proxima_accion: 'Completar datos de prospección',
+            proxima_accion_fecha: null,
+            fecha_creacion: serverTimestamp(),
+            ultima_visita: serverTimestamp(),
+            total_visitas: 0,
+            total_pedidos: 1,
+            total_cobrado_usd: 0,
+            lineas: []
+          });
+          console.log('✅ Cliente creado desde pedido:', rifNorm);
+        } else {
+          // Update existing client pedido count
+          await updateDoc(doc(db, 'clientes', rifNorm), {
+            total_pedidos: (cSnap.data().total_pedidos || 0) + 1,
+            ultima_visita: serverTimestamp()
+          });
+        }
+      } catch(e) { console.error('Error auto-creating client:', e); }
+    }
+    
     console.log('✅ Pedido guardado en Firestore');
     return true;
   } catch(e) {
@@ -1914,7 +1954,7 @@ window.dlPDF = async () => {
   const vend = document.getElementById('p-vend').value || userProfile?.nombre || '';
   const cred = document.getElementById('p-cred').value || '';
   const sub = cart.reduce((s,i) => s + i.p*i.qty, 0);
-  const dAmt = sub * (disc/100);
+  const dAmt = disc===40 ? sub*0.35 + (sub*0.65)*0.05 : sub*(disc/100);
   const after = sub - dAmt;
   const flete = after * 0.035;
   const total = after + flete;
@@ -2066,11 +2106,11 @@ function buildPedTxt(){
   const vend=document.getElementById('p-vend').value||userProfile?.nombre||'—';
   const cred=document.getElementById('p-cred').value;
   const sub=cart.reduce((s,i)=>s+i.p*i.qty,0);
-  const dAmt=sub*(disc/100);
+  const dAmt = disc===40 ? sub*0.35 + (sub*0.65)*0.05 : sub*(disc/100);
   const after=sub-dAmt;
   const flete=after*0.035;
   const total=after+flete;
-  const dl=disc===35?'Pago en divisa −35%':disc===40?'Divisa+pronto −40%':'Sin descuento';
+  const dl=disc===35?'Pago en divisa −35%':disc===40?'Divisa+pronto pago −38.25%':'Sin descuento';
   let t=`📦 *PEDIDO DISTRIGAMA · GRAN CARACAS*\n━━━━━━━━━━━━━━━━━━━━\n`;
   t+=`👤 *Cliente:* ${cli}\n📞 *Tel:* ${tel}  |  *RIF:* ${rif}\n📍 *Dir:* ${dir}\n`;
   t+=`🏦 *Crédito:* ${cred}  |  *Moneda:* ${moneda}\n👔 *Vendedor:* ${vend}\n━━━━━━━━━━━━━━━━━━━━\n`;
