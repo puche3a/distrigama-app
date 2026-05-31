@@ -196,6 +196,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .man-pending strong{display:block;margin-bottom:2px}
 .update-banner{display:none;background:var(--a);color:#fff;padding:10px 16px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;position:sticky;top:52px;z-index:198}
 .update-banner.on{display:block}
+.app-update-banner{display:none;background:#1D9E75;color:#fff;padding:11px 16px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;position:sticky;top:52px;z-index:197;letter-spacing:.01em}
+.app-update-banner.on{display:block}
 /* EMPTY */
 .empty{text-align:center;padding:40px 20px;color:var(--muted)}
 .empty-ico{font-size:36px;margin-bottom:8px}
@@ -215,9 +217,14 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 </head>
 <body>
 
-<!-- UPDATE BANNER -->
+<!-- UPDATE BANNER (Manual) -->
 <div class="update-banner" id="update-banner" onclick="openManual()">
   📢 El manual fue actualizado — toca para ver los cambios
+</div>
+
+<!-- UPDATE BANNER (App version) -->
+<div class="app-update-banner" id="app-update-banner" onclick="forceAppUpdate()">
+  🔄 Nueva versión disponible — toca aquí para actualizar
 </div>
 
 <!-- LOGIN -->
@@ -465,7 +472,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
           <div style="margin-top:12px" id="summary"></div>
           <div class="btn-row">
             <button class="btn btn-out btn-sm" onclick="copyPed()">📋 Copiar texto</button>
-            <button class="btn btn-g btn-sm" onclick="dlPDF()">📥 PDF</button>
+            <button class="btn btn-g btn-sm" onclick="dlPDF()">📤 PDF / Compartir</button>
           </div>
           <div style="margin-top:8px">
             <button class="btn btn-wa" onclick="sendWA()">📲 Enviar por WhatsApp</button>
@@ -989,6 +996,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ── GLOBAL STATE ──
+const APP_VERSION = '5.5'; // ← incrementar cada deploy
 const NOW = new Date();
 const FMT_DATE = NOW.toLocaleDateString('es-VE',{day:'2-digit',month:'short',year:'numeric'});
 const FMT_TIME = () => new Date().toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit'});
@@ -1127,6 +1135,7 @@ function startApp() {
   loadCenso();
   // Listen for manual updates
   listenManualUpdates();
+  listenAppVersion();
   // Listen for notifications
   renderNotifs();
   renderProds();
@@ -1462,6 +1471,31 @@ function listenManualUpdates() {
   });
 }
 
+// ── APP VERSION CHECK ──
+function listenAppVersion() {
+  onSnapshot(doc(db,'config','app'), snap => {
+    if (!snap.exists()) return;
+    const remoteVer = String(snap.data().version || APP_VERSION);
+    if (remoteVer !== APP_VERSION) {
+      document.getElementById('app-update-banner').classList.add('on');
+    }
+  });
+}
+
+window.forceAppUpdate = async () => {
+  // Unregister service workers and hard reload
+  if ('serviceWorker' in navigator) {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    for (const reg of regs) await reg.unregister();
+  }
+  // Clear caches
+  if ('caches' in window) {
+    const keys = await caches.keys();
+    for (const key of keys) await caches.delete(key);
+  }
+  window.location.reload(true);
+};
+
 // ── NOTIFICATIONS ──
 window.toggleNotif = () => {
   document.getElementById('notif-panel').classList.toggle('on');
@@ -1521,11 +1555,15 @@ window.showMan = (sec, el) => {
 
 // ── CATALOGUE ──
 const CAT = [
+  // ── ELECTRICIDAD ──
   {c:'ADPS-049',n:'Convertidor s/tierra naranja',p:0.49,u:'Min 25 Und',g:'ELECTRICIDAD'},
   {c:'ADPS-24',n:'Adaptador Benjamin 15A-125V',p:1.22,u:'Paq 24 Pz',g:'ELECTRICIDAD'},
+  {c:'ADPS-26',n:'Convertidor tipo Euro (min x25)',p:0.42,u:'100pz',g:'ELECTRICIDAD'},
   {c:'ADPS-70',n:'Adaptador gris 3x2',p:0.88,u:'Paq 36pz',g:'ELECTRICIDAD'},
+  {c:'ADPS-80',n:'Adaptador multiuso 2 patas 10A',p:0.72,u:'Paq 20pz',g:'ELECTRICIDAD'},
   {c:'BR-QC50',n:'Breaker THQC 1P 50A superficial',p:3.20,u:'1pz',g:'ELECTRICIDAD'},
   {c:'BR-QC60',n:'Breaker THQC 1P 60A superficial',p:3.20,u:'1pz',g:'ELECTRICIDAD'},
+  {c:'BR-QL50',n:'Breaker THQL 1P 50A empotrar',p:2.16,u:'1pz',g:'ELECTRICIDAD'},
   {c:'BR-THQ-L120',n:'Breaker empotrado 1x20A GDESEO',p:4.07,u:'1 Pz',g:'ELECTRICIDAD'},
   {c:'BR-THQ-L130',n:'Breaker empotrado 1x30A GDESEO',p:4.07,u:'1 Pz',g:'ELECTRICIDAD'},
   {c:'BR-THQ-L140',n:'Breaker empotrado 1x40A GDESEO',p:4.35,u:'1 Pz',g:'ELECTRICIDAD'},
@@ -1535,136 +1573,351 @@ const CAT = [
   {c:'CAN-10A',n:'Regleta plástica 12T 10A (x10)',p:15.03,u:'1 Paq',g:'ELECTRICIDAD'},
   {c:'CAN-15A',n:'Regleta plástica 12T 15A (x10)',p:18.80,u:'1 Paq',g:'ELECTRICIDAD'},
   {c:'CAN-20A',n:'Regleta plástica 12T 20A (x10)',p:20.48,u:'1 Paq',g:'ELECTRICIDAD'},
+  {c:'CAN-5A',n:'Regleta plástica 12T 5A (x10)',p:14.18,u:'1 Paq',g:'ELECTRICIDAD'},
+  {c:'ECFS-07',n:'Enchufe amarillo s/tierra 110-125V',p:1.18,u:'Paq 25pz',g:'ELECTRICIDAD'},
+  {c:'ECFS-09',n:'Enchufe amarillo c/tierra 110-125V',p:1.24,u:'Paq 25pz',g:'ELECTRICIDAD'},
+  {c:'ECFS-11',n:'Enchufe amarillo pata gallina 220V',p:2.46,u:'Paq 10pz',g:'ELECTRICIDAD'},
+  {c:'ECFS-72',n:'Enchufe negro',p:1.15,u:'Paq 30pz',g:'ELECTRICIDAD'},
+  {c:'ECFS-73',n:'Enchufe tipo chino 220V',p:1.77,u:'Paq 25pz',g:'ELECTRICIDAD'},
+  {c:'ECFS-83',n:'Enchufe multi posiciones 16A (x20)',p:0.98,u:'Paq 20pz',g:'ELECTRICIDAD'},
+  {c:'EXTG-250',n:'Extensión blanco 2.5 mts',p:3.35,u:'1pz',g:'ELECTRICIDAD'},
+  {c:'EXTG-500',n:'Extensión eléctrica blanco 5 mts',p:4.74,u:'1pz',g:'ELECTRICIDAD'},
+  {c:'EXTI-01',n:'Extensión industrial 4.5mts 16AWG',p:5.91,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'EXTI-02',n:'Extensión industrial 7.5mts 16AWG',p:8.88,u:'1pz',g:'ELECTRICIDAD'},
   {c:'GBL-210Z',n:'Cable SPT 100% cobre 2x10 100mts GDESEO',p:326.31,u:'1 Rollo',g:'ELECTRICIDAD'},
   {c:'GBL-212Z',n:'Cable SPT 100% cobre 2x12 100mts GDESEO',p:217.31,u:'1 Rollo',g:'ELECTRICIDAD'},
   {c:'GBL-214Z',n:'Cable SPT 100% cobre 2x14 100mts GDESEO',p:139.48,u:'1 Rollo',g:'ELECTRICIDAD'},
   {c:'GBL-216Z',n:'Cable SPT 100% cobre 2x16 100mts GDESEO',p:89.67,u:'1 Rollo',g:'ELECTRICIDAD'},
   {c:'GBL-218Z',n:'Cable SPT 100% cobre 2x18 100mts GDESEO',p:58.53,u:'1 Rollo',g:'ELECTRICIDAD'},
-  {c:'ECFS-07',n:'Enchufe amarillo s/tierra 110-125V',p:1.18,u:'Paq 25pz',g:'ELECTRICIDAD'},
-  {c:'ECFS-09',n:'Enchufe amarillo c/tierra 110-125V',p:1.24,u:'Paq 25pz',g:'ELECTRICIDAD'},
-  {c:'ECFS-72',n:'Enchufe negro',p:1.15,u:'Paq 30pz',g:'ELECTRICIDAD'},
-  {c:'EXTG-250',n:'Extensión blanco 2.5 mts',p:3.35,u:'1pz',g:'ELECTRICIDAD'},
-  {c:'EXTG-500',n:'Extensión eléctrica blanco 5 mts',p:4.74,u:'1pz',g:'ELECTRICIDAD'},
   {c:'GTLS-2',n:'Tablero breaker 2 circuitos c/láminas cobre',p:8.92,u:'1 Pz',g:'ELECTRICIDAD'},
   {c:'GTLS-4',n:'Tablero breaker 4 circuitos c/láminas cobre',p:15.89,u:'1 Pz',g:'ELECTRICIDAD'},
   {c:'GTLS-6',n:'Tablero breaker 6 circuitos c/láminas cobre',p:19.33,u:'1 Pz',g:'ELECTRICIDAD'},
   {c:'GTLS-8',n:'Tablero breaker 8 circuitos c/láminas cobre',p:21.94,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'INTS-22',n:'Interruptor superficial tipo Ticino',p:1.18,u:'36pz',g:'ELECTRICIDAD'},
+  {c:'NRPG-02',n:'Protector 120V 15A nevera/TV/lav.',p:12.47,u:'1pz',g:'ELECTRICIDAD'},
+  {c:'NRPG-03',n:'Protector 120V 15A equipos elect/nevera',p:16.76,u:'1pz',g:'ELECTRICIDAD'},
+  {c:'NRPG-04',n:'Protector aire acond 120V 20A 18000BTU',p:17.31,u:'1pz',g:'ELECTRICIDAD'},
+  {c:'NRPG-05',n:'Protector aire acond 220V 20A 36000BTU',p:17.31,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'NRPG-06',n:'Protector aire acond 120V 18000BTU cable',p:26.02,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'NRPG-07',n:'Protector aire acond 220V 36000BTU cable',p:26.02,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'RGLS-60',n:'Regleta 6 toma corriente c/tierra SEMILIC',p:6.24,u:'1 Pz',g:'ELECTRICIDAD'},
   {c:'SEM0001',n:'Interruptor sencillo p/empotrar',p:2.62,u:'10 Und',g:'ELECTRICIDAD'},
   {c:'SEM0002',n:'Toma corriente doble c/tierra p/emp.',p:3.96,u:'10 Und',g:'ELECTRICIDAD'},
   {c:'SEM0003',n:'Toma corriente sencillo c/tierra p/emptr',p:2.90,u:'1 Und',g:'ELECTRICIDAD'},
   {c:'SEM0004',n:'Interruptor doble p/empotrar',p:2.97,u:'10 Und',g:'ELECTRICIDAD'},
   {c:'SEM0040',n:'Interruptor triple p/empotrar',p:4.43,u:'10 Und',g:'ELECTRICIDAD'},
-  {c:'NRPG-02',n:'Protector 120V 15A nevera/TV/lav.',p:12.47,u:'1pz',g:'ELECTRICIDAD'},
-  {c:'NRPG-04',n:'Protector aire acond 120V 20A 18000BTU',p:17.31,u:'1pz',g:'ELECTRICIDAD'},
-  {c:'NRPG-05',n:'Protector aire acond 220V 20A 36000BTU',p:17.31,u:'1 Pz',g:'ELECTRICIDAD'},
-  {c:'RGLS-60',n:'Regleta 6 toma corriente c/tierra SEMILIC',p:6.24,u:'1 Pz',g:'ELECTRICIDAD'},
+  {c:'SEM0042',n:'Interruptor y toma corriente s/tierra',p:3.57,u:'10 Und',g:'ELECTRICIDAD'},
+  {c:'SEM0043',n:'Interruptor tres vías p/empotrar',p:2.72,u:'10 Und',g:'ELECTRICIDAD'},
+  {c:'TYI-S01',n:'Interruptor sencillo panel 110/220V blanco',p:2.78,u:'Paq 10pz',g:'ELECTRICIDAD'},
+  {c:'TYI-S03',n:'Interruptor doble panel 110/220V blanco',p:4.17,u:'Paq 10pz',g:'ELECTRICIDAD'},
+  {c:'TYI-S05',n:'Toma corriente doble c/tierra panel blanco',p:4.32,u:'Paq 10pz',g:'ELECTRICIDAD'},
   {c:'TYI-S06',n:'Toma corriente c/tierra+2 USB 127-240V',p:14.33,u:'Paq 10pz',g:'ELECTRICIDAD'},
+  {c:'TYI-S09',n:'Toma corriente multiusos panel 120/220V',p:4.24,u:'Paq 10pz',g:'ELECTRICIDAD'},
+  {c:'DRI-LED',n:'Driver balastro multivoltaje panel LED 12W',p:0.89,u:'1 Und',g:'ELECTRICIDAD'},
+  {c:'BX-FC01',n:'Fotocelda sensor c/base 15A 85-265V',p:5.66,u:'Min X 3pz',g:'ELECTRICIDAD'},
+  // ── PLOMERIA ──
   {c:'CPP-AB01',n:'Anillo PVC c/rosca 1/2" agua fría',p:0.52,u:'Paq 50pz',g:'PLOMERIA'},
+  {c:'CPP-AB02',n:'Anillo PVC c/rosca 3/4" agua fría',p:0.74,u:'Paq 50pz',g:'PLOMERIA'},
   {c:'CPP-AB04',n:'Codo 1/2" PVC c/rosca 90° agua fría',p:0.60,u:'Paq 50pz',g:'PLOMERIA'},
+  {c:'CPP-AB05',n:'Codo 3/4" PVC c/rosca 90° agua fría',p:0.93,u:'Paq 40pz',g:'PLOMERIA'},
   {c:'CPP-AB07',n:'Tee PVC 1/2" c/rosca agua fría',p:0.83,u:'Paq 50pz',g:'PLOMERIA'},
+  {c:'CPP-AB08',n:'Tee PVC 3/4" c/rosca agua fría',p:1.19,u:'Paq 25pz',g:'PLOMERIA'},
   {c:'CPP-AB19',n:'Unión universal c/rosca 1/2" agua fría',p:1.33,u:'Paq 50pz',g:'PLOMERIA'},
+  {c:'CPP-AB20',n:'Unión universal c/rosca 3/4" agua fría',p:1.81,u:'Paq 20pz',g:'PLOMERIA'},
+  {c:'CPP-AB13',n:'Bushing PVC c/rosca 3/4"x1/2" agua fría',p:0.24,u:'Paq 100pz',g:'PLOMERIA'},
+  {c:'CPP-AB14',n:'Bushing PVC c/rosca 1"x1/2" agua fría',p:0.52,u:'Paq 100pz',g:'PLOMERIA'},
+  {c:'CPV-AF01',n:'Anillo PVC pegar 1/2" agua fría',p:0.29,u:'Paq 100pz',g:'PLOMERIA'},
+  {c:'CPV-AF02',n:'Anillo PVC pegar 3/4" agua fría',p:0.36,u:'Paq 100pz',g:'PLOMERIA'},
   {c:'CPV-AF04',n:'Codo 1/2" PVC pegar 90° agua fría',p:0.38,u:'Paq 100pz',g:'PLOMERIA'},
+  {c:'CPV-AF05',n:'Codo 3/4" PVC pegar 90° agua fría',p:0.55,u:'Paq 50pz',g:'PLOMERIA'},
   {c:'CPV-AF07',n:'Tee PVC 1/2" pegar agua fría',p:0.55,u:'Paq 80pz',g:'PLOMERIA'},
+  {c:'CPV-AF08',n:'Tee PVC 3/4" pegar agua fría',p:0.69,u:'Paq 50pz',g:'PLOMERIA'},
+  {c:'CPV-AF22',n:'Unión universal PVC 1/2" pegar agua fría',p:1.50,u:'Paq 60pz',g:'PLOMERIA'},
+  {c:'CPV-AF23',n:'Unión universal PVC 3/4" pegar agua fría',p:2.05,u:'Paq 30pz',g:'PLOMERIA'},
+  {c:'CPV-AF19',n:'Reducción PVC bushing 3/4"x1/2" agua fría',p:0.24,u:'Paq 200pz',g:'PLOMERIA'},
   {c:'LLPS-71',n:'Llave paso 1/2" cuerpo PVC rosca galv.',p:1.87,u:'1 Pz',g:'PLOMERIA'},
   {c:'LLPS-72',n:'Llave paso 3/4" cuerpo PVC rosca galv.',p:2.53,u:'1 Pz',g:'PLOMERIA'},
+  {c:'LLPS-18',n:'Llave paso 1/2"x1/2" rápido manilla hierro',p:4.19,u:'12pz',g:'PLOMERIA'},
+  {c:'LLPS-35',n:'Llave paso 3/4"x3/4" cromado manilla hierro',p:5.91,u:'10pz',g:'PLOMERIA'},
+  {c:'LLPS-12',n:'Llave paso 1/2"x1/2" rápido bronce-hierro',p:6.84,u:'10pz',g:'PLOMERIA'},
+  {c:'LLPS-36',n:'Llave paso 3/4"x3/4" bronce manilla hierro',p:12.71,u:'10pz',g:'PLOMERIA'},
   {c:'LLCM-050',n:'Llave compuerta 1/2" bronce',p:11.49,u:'1 Pz',g:'PLOMERIA'},
   {c:'LLCM-075',n:'Llave compuerta 3/4" bronce',p:14.98,u:'1 Pz',g:'PLOMERIA'},
   {c:'LLCM-100',n:'Llave compuerta 1" bronce',p:17.94,u:'1 Pz',g:'PLOMERIA'},
+  {c:'LLPV-P12',n:'Válvula plástico pegar 1/2"',p:1.06,u:'Paq 12pz',g:'PLOMERIA'},
+  {c:'LLPV-P34',n:'Válvula plástico pegar 3/4"',p:1.48,u:'Paq 12pz',g:'PLOMERIA'},
+  {c:'LLPV-R18',n:'Válvula plástico c/rosca 1/2"',p:0.98,u:'Paq 12pz',g:'PLOMERIA'},
+  {c:'LLPV-R28',n:'Válvula plástico c/rosca 3/4"',p:1.39,u:'Paq 12pz',g:'PLOMERIA'},
   {c:'TFLS-W1510',n:'Wokin teflón 1/2" 12mm x 10mts',p:0.39,u:'10pz',g:'PLOMERIA'},
+  {c:'TFLS-38',n:'Teflón profesional 3/4" 15mts (x10)',p:1.35,u:'10 Pz',g:'PLOMERIA'},
   {c:'TUB-GD01',n:'Tubo PVC agua fría 1/2" 3mts SCH40',p:6.82,u:'x5 Und Min',g:'PLOMERIA'},
   {c:'VVCS-24',n:'Válvula check 1/2" bronce vertical',p:6.60,u:'1 Pz',g:'PLOMERIA'},
   {c:'VVCS-29',n:'Válvula check 3/4" bronce vertical',p:10.02,u:'1 Pz',g:'PLOMERIA'},
   {c:'VVCS-30',n:'Válvula check 1" bronce vertical',p:12.26,u:'1 Pz',g:'PLOMERIA'},
+  {c:'VVCS-41',n:'Válvula check 1/2" bronce horizontal',p:7.77,u:'1 Pz',g:'PLOMERIA'},
+  {c:'VVCS-42',n:'Válvula check 3/4" bronce horizontal',p:11.16,u:'1pz',g:'PLOMERIA'},
+  {c:'GALC-01',n:'Anillo 1/2" galvanizado',p:0.62,u:'1 Pz',g:'PLOMERIA'},
+  {c:'GALC-02',n:'Anillo 3/4" galvanizado',p:0.98,u:'1 Pz',g:'PLOMERIA'},
   {c:'GALC-04',n:'Codo 90° 1/2" galvanizado',p:0.68,u:'1 Pz',g:'PLOMERIA'},
   {c:'GALC-05',n:'Codo 90° 3/4" galvanizado',p:1.30,u:'1 Pz',g:'PLOMERIA'},
   {c:'GALC-07',n:'Tee 1/2" galvanizado',p:1.00,u:'1 Pz',g:'PLOMERIA'},
+  {c:'GALC-08',n:'Tee 3/4" galvanizado',p:1.47,u:'1 Pz',g:'PLOMERIA'},
+  {c:'GALC-22',n:'Unión universal 1/2" galvanizado',p:1.95,u:'1 Pz',g:'PLOMERIA'},
+  {c:'GALC-23',n:'Unión universal 3/4" galvanizado',p:2.33,u:'1 Pz',g:'PLOMERIA'},
+  {c:'GALC-36',n:'Junta Dresser 1/2" galvanizado',p:5.65,u:'1 Pz',g:'PLOMERIA'},
+  {c:'GALC-37',n:'Junta Dresser 3/4" galvanizado',p:7.78,u:'1 Pz',g:'PLOMERIA'},
+  {c:'GALC-38',n:'Junta Dresser 1" galvanizado',p:10.30,u:'1 Pz',g:'PLOMERIA'},
+  {c:'FLA-H01',n:'Flanche para tanque de agua 1/2"',p:1.73,u:'1 Pz',g:'PLOMERIA'},
+  {c:'FLA-H02',n:'Flanche para tanque de agua 3/4"',p:2.13,u:'1 Pz',g:'PLOMERIA'},
+  {c:'FLA-H03',n:'Flanche para tanque de agua 1"',p:3.03,u:'1 Pz',g:'PLOMERIA'},
+  {c:'FLO-P61',n:'Válvula flotante PVC 1/2" interior',p:10.32,u:'1 Und',g:'PLOMERIA'},
+  {c:'FLO-P62',n:'Válvula flotante PVC 3/4" interior',p:10.73,u:'1 Und',g:'PLOMERIA'},
+  {c:'VAL-P01',n:'Válvula check vertical PVC rosca 3/4"',p:2.03,u:'1 Und',g:'PLOMERIA'},
+  {c:'VAL-P02',n:'Válvula check vertical PVC rosca 1"',p:2.15,u:'1 Und',g:'PLOMERIA'},
+  {c:'SUR-P10',n:'Surtidor c/boya tradicional 1/2"',p:1.67,u:'1 Pz',g:'PLOMERIA'},
+  {c:'SUR-P11',n:'Surtidor para tanque poceta 1/2" GDESEO',p:7.65,u:'1 Pz',g:'PLOMERIA'},
+  // ── BOMBAS ──
   {c:'BOM-W6637',n:'Wokin bomba periférica 1/2HP 100% cobre',p:61.22,u:'1 Pz',g:'BOMBAS'},
   {c:'IMPS-50',n:'Impeler bomba hidroneumático 1/2HP bronce',p:5.66,u:'1 Und',g:'BOMBAS'},
   {c:'IMPS-75',n:'Impeler bomba hidroneumático 3/4HP bronce',p:6.12,u:'1 Und',g:'BOMBAS'},
+  {c:'ASPS-50',n:'Aspa bomba hidroneumático 1/2HP',p:1.10,u:'1 Und',g:'BOMBAS'},
+  {c:'ASPS-75',n:'Aspa bomba hidroneumático 3/4HP y 1HP',p:1.37,u:'1 Und',g:'BOMBAS'},
   {c:'SLLS-50',n:'Sello mecánico bomba 1/2HP (x10)',p:1.27,u:'10pz',g:'BOMBAS'},
   {c:'SLLS-75',n:'Sello mecánico bomba 3/4HP (x10)',p:2.05,u:'10pz',g:'BOMBAS'},
+  {c:'ROLS-50',n:'Rolinera 6201 bomba 1/2HP (x10)',p:1.98,u:'10pz',g:'BOMBAS'},
+  {c:'ROLS-75',n:'Rolinera 6202 bomba 3/4HP (x10)',p:2.92,u:'10pz',g:'BOMBAS'},
   {c:'TNKS-05',n:'Tanque 5 litros rosca macho 1"',p:38.85,u:'1 Und',g:'BOMBAS'},
   {c:'TNKS-08',n:'Tanque 8 litros rosca macho 1"',p:42.36,u:'1 Und',g:'BOMBAS'},
   {c:'TNKS-24',n:'Tanque 24 litros rosca macho 1"',p:56.79,u:'1 Und',g:'BOMBAS'},
   {c:'PRES-240',n:'Presostato 20-40 PSI bomba hidroneumático',p:10.21,u:'1 Und',g:'BOMBAS'},
   {c:'PRES-350',n:'Presostato 30-50 PSI bomba hidroneumático',p:10.21,u:'1 Und',g:'BOMBAS'},
   {c:'PRE-C42',n:'Prescontrol 110V/220V 10BAR c/válvula bronce',p:53.22,u:'1 Und',g:'BOMBAS'},
+  {c:'MMTS-04',n:'Manómetro bomba hidroneumático 4cm 0-80PSI',p:5.92,u:'1 Und',g:'BOMBAS'},
+  {c:'MMTS-06',n:'Manómetro bomba hidroneumático 5cm 0-90PSI',p:6.28,u:'1 Und',g:'BOMBAS'},
   {c:'FLO-E03',n:'Flotante eléctrico AC 125V cable 3mts',p:11.51,u:'Min x2pz',g:'BOMBAS'},
   {c:'FLO-E05',n:'Flotante eléctrico AC 125V cable 5mts',p:14.81,u:'1 Pz',g:'BOMBAS'},
+  {c:'FLO-EP',n:'Interruptor flotador Hidrotek cable 5m',p:7.98,u:'1 Pz',g:'BOMBAS'},
+  {c:'FILS-10',n:'Filtro acero inox rosca macho 1" (x10)',p:1.48,u:'1 Und',g:'BOMBAS'},
+  {c:'FILS-15',n:'Filtro acero inox rosca macho 1.1/2"',p:3.03,u:'1 Und',g:'BOMBAS'},
+  {c:'FILS-20',n:'Filtro acero inox rosca macho 2"',p:3.87,u:'1 Und',g:'BOMBAS'},
+  {c:'FILS-34',n:'Filtro acero inox rosca macho 3/4"',p:1.18,u:'1 Und',g:'BOMBAS'},
+  // ── TIRRAP ──
   {c:'TRGD-100',n:'Tirrap blanco 2.5mm x 100mm (x100)',p:0.92,u:'1 Paq',g:'TIRRAP'},
   {c:'TRGD-100N',n:'Tirrap negro 2.5mm x 100mm (x100)',p:0.92,u:'1 Paq',g:'TIRRAP'},
   {c:'TRGD-200',n:'Tirrap blanco 4.6mm x 200mm (x100)',p:3.98,u:'1 Paq',g:'TIRRAP'},
   {c:'TRGD-200N',n:'Tirrap negro 4.6mm x 200mm (x100)',p:4.51,u:'1 Paq',g:'TIRRAP'},
+  {c:'TRGD-250',n:'Tirrap blanco 4.6mm x 250mm (x100)',p:4.91,u:'1 Paq',g:'TIRRAP'},
+  {c:'TRGD-250N',n:'Tirrap negro 4.6mm x 250mm (x100)',p:5.00,u:'1 Paq',g:'TIRRAP'},
   {c:'TRGD-350',n:'Tirrap blanco 4.6mm x 350mm (x100)',p:7.46,u:'1 Paq',g:'TIRRAP'},
+  {c:'TRGD-350N',n:'Tirrap negro 4.6mm x 350mm (x100)',p:7.46,u:'1 Paq',g:'TIRRAP'},
+  {c:'TRGD-400',n:'Tirrap blanco 4.8mm x 400mm (x100)',p:8.78,u:'1 Paq',g:'TIRRAP'},
+  {c:'TRGD-400N',n:'Tirrap negro 4.8mm x 400mm (x100)',p:8.78,u:'1 Paq',g:'TIRRAP'},
   {c:'TRGD-500',n:'Tirrap blanco 7mm x 500mm (x100)',p:21.40,u:'1 Paq',g:'TIRRAP'},
+  {c:'TRGD-500N',n:'Tirrap negro 7mm x 500mm (x100)',p:21.40,u:'1 Paq',g:'TIRRAP'},
   {c:'TRGD-A565',n:'Tirrap acero inox 4.6x200mm (x100)',p:9.88,u:'1 Paq',g:'TIRRAP'},
+  {c:'TRGD-A567',n:'Tirrap acero inox 4.6x300mm (x100)',p:10.73,u:'1 Paq',g:'TIRRAP'},
+  // ── GRIFERIAS ──
   {c:'GPP-201',n:'Grifería PVC fregadero cuello cisne cromado',p:6.35,u:'1 Pz',g:'GRIFERIAS'},
+  {c:'GPP-203',n:'Grifería PVC fregadero cuello cisne cromado',p:6.35,u:'1 Pz',g:'GRIFERIAS'},
+  {c:'GPP-205',n:'Grifería PVC lavamano doble cromado',p:10.74,u:'1 Und',g:'GRIFERIAS'},
   {c:'GPP-206',n:'Grifería PVC lavamano monomando cromado',p:5.95,u:'1 Und',g:'GRIFERIAS'},
+  {c:'LFR-606',n:'Grifería lavamano doble cuerpo plástico',p:13.95,u:'1 Pz',g:'GRIFERIAS'},
+  {c:'LFR-610',n:'Grifería lavamano doble cuello cisne cromado',p:14.74,u:'1 Pz',g:'GRIFERIAS'},
   {c:'LLF-G110',n:'Grifería fregadero indiv. cuerpo bronce',p:13.98,u:'1 Und',g:'GRIFERIAS'},
+  {c:'LLF-G130',n:'Grifería fregadero indiv. cuerpo bronce',p:13.12,u:'1 Und',g:'GRIFERIAS'},
+  {c:'LLF-P823',n:'Grifería fregadero 8" cuerpo plástico cromado',p:15.94,u:'1 Und',g:'GRIFERIAS'},
+  {c:'LLL-A107',n:'Llave lavamanos acero inox cromado',p:11.63,u:'1 Und',g:'GRIFERIAS'},
   {c:'LLL-P140',n:'Llave lavamanos plástico cromado',p:6.55,u:'1 Und',g:'GRIFERIAS'},
+  {c:'LLL-P143',n:'Llave lavamanos individual plástico cromado',p:6.91,u:'1 Pz',g:'GRIFERIAS'},
   {c:'FLO-B012',n:'Flotante bronce 1/2"',p:12.70,u:'1 Pz',g:'GRIFERIAS'},
   {c:'FLO-B034',n:'Flotante bronce 3/4"',p:17.12,u:'1 Pz',g:'GRIFERIAS'},
-  {c:'VPP-301',n:'Llave chorro PVC blanco con pico',p:2.30,u:'1 Und',g:'GRIFERIAS'},
+  {c:'FLO-B100',n:'Flotante bronce 1"',p:25.69,u:'1 Pz',g:'GRIFERIAS'},
+  {c:'FLO-C01',n:'Flotante bronce 1/2" con boya',p:9.40,u:'1pz',g:'GRIFERIAS'},
+  {c:'FLO-C02',n:'Flotante bronce 3/4" con boya',p:11.40,u:'1 Pz',g:'GRIFERIAS'},
+  {c:'VPP-101',n:'Grifo PVC para thermo rojo',p:1.30,u:'1 Und',g:'GRIFERIAS'},
+  {c:'VPP-104',n:'Llave 1/2" manguera PVC con pico',p:1.73,u:'1 Und',g:'GRIFERIAS'},
+  {c:'VPP-106',n:'Llave 1/2" manguera PVC paso rápido',p:1.48,u:'1 Und',g:'GRIFERIAS'},
+  {c:'VPP-109',n:'Llave lavamano PVC monomando individual',p:5.95,u:'1 Und',g:'GRIFERIAS'},
+  {c:'VPP-112',n:'Llave de arresto PVC rosca macho 1/2"',p:1.69,u:'1 Und',g:'GRIFERIAS'},
+  {c:'REG-A101',n:'Regadera acero inox cromado',p:9.68,u:'1 Und',g:'GRIFERIAS'},
+  {c:'REG-D28',n:'Ducha teléfono 3 posiciones Mercedes',p:7.92,u:'1 Pz',g:'GRIFERIAS'},
+  // ── ABRAZADERA ──
   {c:'ABRA-06',n:'Abrazadera acero inox 1/4"-1/2" (x25)',p:0.38,u:'25 Pz',g:'ABRAZADERA'},
+  {c:'ABRA-08',n:'Abrazadera acero inox 5/16"-1/2" (x25)',p:0.38,u:'25 Pz',g:'ABRAZADERA'},
   {c:'ABRA-11',n:'Abrazadera acero inox 7/16"-3/4" (x100)',p:0.40,u:'Paq 100pz',g:'ABRAZADERA'},
+  {c:'ABRA-19',n:'Abrazadera acero inox 3/4"-1.9/64" (x100)',p:0.48,u:'Paq 100pz',g:'ABRAZADERA'},
   {c:'ABRA-25',n:'Abrazadera acero inox 1"-1.15/32" (x50)',p:0.58,u:'Paq 50pz',g:'ABRAZADERA'},
+  {c:'ABRA-32',n:'Abrazadera acero inox 1.1/4"-1.11/16" (x50)',p:0.62,u:'Paq 50pz',g:'ABRAZADERA'},
   {c:'ABRA-39',n:'Abrazadera acero inox 1.5"-2.25" (x25)',p:1.00,u:'Paq 25pz',g:'ABRAZADERA'},
   {c:'ABRA-51',n:'Abrazadera acero inox 2"-2.75" (x25)',p:1.13,u:'Paq 25pz',g:'ABRAZADERA'},
+  {c:'ABRA-71',n:'Abrazadera acero inox 2.75"-3.5" (x25)',p:1.27,u:'Paq 25pz',g:'ABRAZADERA'},
+  {c:'ABRA-90',n:'Abrazadera acero inox 3.5"-4.5" (x25)',p:1.57,u:'Paq 25pz',g:'ABRAZADERA'},
+  {c:'ABRA-P91',n:'Abrazadera plástica c/ramplug 1/2" (x50)',p:9.23,u:'1 Paq',g:'ABRAZADERA'},
+  {c:'ABRA-P92',n:'Abrazadera plástica c/ramplug 3/4" (x50)',p:10.60,u:'1 Paq',g:'ABRAZADERA'},
+  {c:'ABRA-T21',n:'Abrazadera tubo 2 patas 1/2" (x100)',p:8.25,u:'1 Paq',g:'ABRAZADERA'},
+  {c:'ABRA-T22',n:'Abrazadera tubo 2 patas 3/4" (x100)',p:9.60,u:'1 Paq',g:'ABRAZADERA'},
   {c:'ABRH-25',n:'Abrazadera hierro 15/32"-1" (x100)',p:0.22,u:'X 25 Pz',g:'ABRAZADERA'},
+  {c:'ABRH-29',n:'Abrazadera hierro 3/4"-1.9/64" (x100)',p:0.23,u:'Paq 100pz',g:'ABRAZADERA'},
+  {c:'ABRH-31',n:'Abrazadera hierro 3/4"-1.1/16" (x100)',p:0.33,u:'Paq 100pz',g:'ABRAZADERA'},
+  {c:'ABRH-57',n:'Abrazadera hierro 1.5"-2.25" (x25)',p:0.62,u:'Paq 25pz',g:'ABRAZADERA'},
   {c:'GTR-T01',n:'Tirro cinta papel 1/2" x 30mts',p:0.85,u:'12 Pz',g:'ABRAZADERA'},
   {c:'GTR-T02',n:'Tirro cinta papel 3/4" x 30mts',p:1.27,u:'12 Pz',g:'ABRAZADERA'},
+  {c:'GTR-T03',n:'Tirro cinta papel 1" x 30mts',p:1.57,u:'12 Pz',g:'ABRAZADERA'},
   {c:'RAM-P01',n:'Ramplug blanco 3/16"x1" (x100)',p:2.78,u:'1 Paq',g:'ABRAZADERA'},
   {c:'RAM-P02',n:'Ramplug rojo 3/16"x1" (x100)',p:2.93,u:'1 Paq',g:'ABRAZADERA'},
+  {c:'RAM-P03',n:'Ramplug verde 1/4"x1" (x100)',p:2.38,u:'1 Paq',g:'ABRAZADERA'},
+  {c:'RAM-HM06',n:'Ramplug metálico expansible 1/4"',p:0.37,u:'100pz',g:'ABRAZADERA'},
+  {c:'RAM-HM08',n:'Ramplug metálico expansible 5/16"',p:0.58,u:'50pz',g:'ABRAZADERA'},
+  {c:'RAM-HM10',n:'Ramplug metálico expansible 3/8"',p:0.97,u:'30pz',g:'ABRAZADERA'},
+  // ── FERRETERIA ──
+  {c:'CLV-G075',n:'Clavos dulce c/cabeza 3/4" 1kg',p:5.79,u:'1 Kl',g:'FERRETERIA'},
+  {c:'CLV-G115',n:'Clavos dulce c/cabeza 1.5" 1kg',p:5.60,u:'1 Kl',g:'FERRETERIA'},
   {c:'CLV-G120',n:'Clavos dulce c/cabeza 2" 1kg',p:5.50,u:'1 Kl',g:'FERRETERIA'},
   {c:'CLV-G130',n:'Clavos dulce c/cabeza 3" 1kg',p:5.41,u:'1 Kl',g:'FERRETERIA'},
+  {c:'CLV-G140',n:'Clavos dulce c/cabeza 4" 1kg',p:5.41,u:'1 Kl',g:'FERRETERIA'},
   {c:'TRR-331',n:'Tornillo drywall #6x1/2" 1kg',p:8.45,u:'1 Kg',g:'FERRETERIA'},
+  {c:'TRR-332',n:'Tornillo drywall #6x3/4" 1kg',p:8.45,u:'1 Kg',g:'FERRETERIA'},
   {c:'TRR-333',n:'Tornillo drywall #6x1" 1kg',p:8.45,u:'1 Kg',g:'FERRETERIA'},
+  {c:'TRR-334',n:'Tornillo drywall #6x1.1/4" 1kg',p:8.45,u:'1 Kg',g:'FERRETERIA'},
+  {c:'TRR-335',n:'Tornillo drywall #6x1.5" 1kg',p:8.45,u:'1 Kg',g:'FERRETERIA'},
+  {c:'TRR-336',n:'Tornillo drywall #6x2" 1kg',p:8.45,u:'1 Kg',g:'FERRETERIA'},
+  {c:'TRR-441',n:'Tornillo drywall #8x1/2" 1kg',p:8.45,u:'1 Kl',g:'FERRETERIA'},
+  {c:'TRR-443',n:'Tornillo drywall #8x1" 1kg',p:8.44,u:'1 Kl',g:'FERRETERIA'},
+  {c:'TRR-445',n:'Tornillo drywall #8x1.5" 1kg',p:8.44,u:'1 Kl',g:'FERRETERIA'},
   {c:'TRR-446',n:'Tornillo drywall #8x2" 1kg',p:8.45,u:'1 Kl',g:'FERRETERIA'},
+  {c:'TRR-447',n:'Tornillo drywall #8x2.5" 1kg',p:8.43,u:'1kg',g:'FERRETERIA'},
+  {c:'TRR-448',n:'Tornillo drywall #8x3" 1kg',p:8.43,u:'1 Kl',g:'FERRETERIA'},
+  {c:'GBR-R72',n:'Brocha 1" mango plástico pelo negro',p:0.83,u:'12 Pz',g:'FERRETERIA'},
+  {c:'GBR-R73',n:'Brocha 1.5" mango plástico pelo negro',p:1.35,u:'12 Pz',g:'FERRETERIA'},
   {c:'GBR-R74',n:'Brocha 2" mango plástico pelo negro',p:1.70,u:'12pz',g:'FERRETERIA'},
   {c:'GBR-R76',n:'Brocha 3" mango plástico pelo negro',p:2.72,u:'12 Pz',g:'FERRETERIA'},
+  {c:'GBR-R77',n:'Brocha 4" mango plástico pelo negro',p:3.03,u:'12 Pz',g:'FERRETERIA'},
+  {c:'GBR-W0620',n:'Wokin brocha 2"',p:0.89,u:'12 Pz',g:'FERRETERIA'},
+  {c:'GBR-W0630',n:'Wokin brocha 3"',p:1.49,u:'12 Pz',g:'FERRETERIA'},
+  {c:'GBR-W0640',n:'Wokin brocha 4"',p:2.27,u:'12 Pz',g:'FERRETERIA'},
   {c:'GNL-1616',n:'Canaleta PVC 16x16mm 2mts (x15)',p:2.31,u:'X 15 Pz',g:'FERRETERIA'},
   {c:'GNL-2010',n:'Canaleta PVC 20x10mm 2mts (x15)',p:2.32,u:'X 15 Pz',g:'FERRETERIA'},
+  {c:'GNL-2414',n:'Canaleta PVC 24x14mm 2mts (min 5)',p:2.99,u:'Min 5pz',g:'FERRETERIA'},
+  {c:'GNL-3015',n:'Canaleta PVC 30x15mm 2mts (x10)',p:3.25,u:'X 10pz',g:'FERRETERIA'},
   {c:'REG-G11',n:'Regulador gas clip-on Lengas',p:15.50,u:'1 Pz',g:'FERRETERIA'},
+  {c:'REG-G12',n:'Regulador gas 18/43kg rosca punta pol',p:13.57,u:'1 Pz',g:'FERRETERIA'},
   {c:'REG-G13',n:'Regulador gas Autogas punta gruesa',p:8.83,u:'1 Pz',g:'FERRETERIA'},
-  {c:'SPRAY-0725',n:'Pintura aerosol 400ml blanco mate',p:2.39,u:'12 Pz',g:'FERRETERIA'},
-  {c:'SPRAY-0726',n:'Pintura aerosol 400ml rojo',p:2.39,u:'12pz',g:'FERRETERIA'},
+  {c:'REG-G15',n:'Regulador gas Digas punta fina',p:8.83,u:'1 Pz',g:'FERRETERIA'},
+  {c:'RAB-CB01',n:'Rabo de cochino bombona gas 50cm',p:18.21,u:'1 Und',g:'FERRETERIA'},
+  {c:'SPRAY-0726',n:'Pintura aerosol Procolor 400ml rojo',p:2.39,u:'12pz',g:'FERRETERIA'},
+  {c:'SPRAY-0730',n:'Pintura aerosol Procolor 400ml verde',p:2.47,u:'12 Pz',g:'FERRETERIA'},
+  {c:'SPRAY-1334',n:'Pintura aerosol Procolor 400ml amarillo',p:2.39,u:'X 12 Pz',g:'FERRETERIA'},
+  {c:'SPRAY-AM',n:'Pintura aerosol ZASC amarillo 400ml',p:2.49,u:'1pz',g:'FERRETERIA'},
+  {c:'GLIA-01',n:'Lija de agua grano 80 GDESEO (x und)',p:0.49,u:'25pz',g:'FERRETERIA'},
+  {c:'GLIA-03',n:'Lija de agua grano 120 GDESEO (x und)',p:0.49,u:'25 Pz',g:'FERRETERIA'},
+  {c:'GLIA-05',n:'Lija de agua grano 180 GDESEO (x und)',p:0.49,u:'25pz',g:'FERRETERIA'},
+  {c:'GLIA-10',n:'Lija de agua grano 400 GDESEO (x und)',p:0.49,u:'25 Pz',g:'FERRETERIA'},
+  {c:'GLIA-11',n:'Lija de agua grano 600 GDESEO (x und)',p:0.49,u:'25 Pz',g:'FERRETERIA'},
+  // ── MECHA ──
+  {c:'BRO-B25',n:'Mecha metal 3/32" calibrada (x10)',p:2.03,u:'1 Paq',g:'MECHA'},
   {c:'BRO-B32',n:'Mecha metal 1/8" calibrada (x10)',p:3.88,u:'1 Paq',g:'MECHA'},
+  {c:'BRO-B40',n:'Mecha metal 5/32" calibrada (x10)',p:5.00,u:'1 Paq',g:'MECHA'},
   {c:'BRO-B50',n:'Mecha metal 3/16" calibrada (x10)',p:7.42,u:'1 Paq',g:'MECHA'},
   {c:'BRO-B65',n:'Mecha metal 1/4" calibrada (x10)',p:11.47,u:'1 Paq',g:'MECHA'},
+  {c:'BRO-B80',n:'Mecha metal 5/16" calibrada (x10)',p:17.22,u:'1 Paq',g:'MECHA'},
+  {c:'MEC-D40',n:'Mecha metal HSS M2 5/32" (x und)',p:1.33,u:'10 Pz',g:'MECHA'},
+  {c:'MEC-D60',n:'Mecha metal HSS M2 15/64" (x und)',p:2.72,u:'10 Pz',g:'MECHA'},
+  {c:'MEC-D65',n:'Mecha metal HSS M2 1/4" (x und)',p:3.22,u:'10 Pz',g:'MECHA'},
   {c:'MEC-T65',n:'Mecha concreto 1/4" calibrada (x10)',p:0.90,u:'x 10pz',g:'MECHA'},
   {c:'MEC-T75',n:'Mecha concreto 5/16" calibrada (x10)',p:1.42,u:'x 10pz',g:'MECHA'},
   {c:'MEC-T85',n:'Mecha concreto 3/8" calibrada (x10)',p:1.83,u:'x 10 Pz',g:'MECHA'},
+  {c:'MEC-T95',n:'Mecha concreto 1/2" calibrada (x10)',p:3.38,u:'X 10 Pz',g:'MECHA'},
+  // ── DISCO ──
   {c:'DISC-F02',n:'Disco corte ultrafino cónico 4.5"x1.2" (x10)',p:0.78,u:'x 10 Pz',g:'DISCO'},
-  {c:'DIS-CR41',n:'Disco diamantado ranurado 4.5" húmedo/seco',p:5.05,u:'10 Pz',g:'DISCO'},
-  {c:'DIS-CR43',n:'Disco diamantado segmentado 4.5" en seco',p:4.58,u:'10 Pz',g:'DISCO'},
+  {c:'DISC-F07',n:'Disco corte ultrafino 7"x1.6mm (x10)',p:1.62,u:'X 10 Pz',g:'DISCO'},
   {c:'DISC-E47',n:'Disco desbaste metal 4.5" (x5)',p:1.88,u:'x 5 Pz',g:'DISCO'},
+  {c:'DISC-E77',n:'Disco desbaste metal 7" (x5)',p:3.78,u:'X 5 Pz',g:'DISCO'},
+  {c:'DIS-CR41',n:'Disco diamantado ranurado 4.5" húmedo/seco',p:5.05,u:'10 Pz',g:'DISCO'},
+  {c:'DIS-CR42',n:'Disco diamantado continuo 4.5" húmedo',p:4.88,u:'10 Pz',g:'DISCO'},
+  {c:'DIS-CR43',n:'Disco diamantado segmentado 4.5" en seco',p:4.58,u:'10 Pz',g:'DISCO'},
+  {c:'DIS-CR71',n:'Disco diamantado ranurado 7" húmedo/seco',p:11.25,u:'10 Pz',g:'DISCO'},
+  {c:'DIS-CR73',n:'Disco diamantado segmentado 7" en seco',p:10.52,u:'10 Pz',g:'DISCO'},
+  {c:'DIS-507',n:'Disco flap 7" grano 40 ZASC (x5)',p:4.77,u:'5 Pz',g:'DISCO'},
+  {c:'DIS-509',n:'Disco flap 7" grano 80 ZASC (x5)',p:4.85,u:'X 5 Pz',g:'DISCO'},
+  // ── CANDADOS ──
   {c:'CDD-362',n:'Candado estándar 25mm plateado',p:2.52,u:'1 Pz',g:'CANDADOS'},
   {c:'CDD-363',n:'Candado estándar 32mm plateado',p:3.20,u:'1 Pz',g:'CANDADOS'},
   {c:'CDD-364',n:'Candado estándar 40mm plateado',p:4.00,u:'1 Pz',g:'CANDADOS'},
   {c:'CDD-365',n:'Candado estándar 50mm plateado',p:5.83,u:'1 Pz',g:'CANDADOS'},
+  {c:'CDD-366',n:'Candado estándar 63mm plateado',p:8.03,u:'1 Pz',g:'CANDADOS'},
+  {c:'CDD-H25',n:'Candado estándar 25mm dorado',p:1.27,u:'1 Pz',g:'CANDADOS'},
+  {c:'CDD-H32',n:'Candado estándar 32mm dorado',p:2.15,u:'1 Pz',g:'CANDADOS'},
+  {c:'CDD-H38',n:'Candado estándar 38mm dorado',p:2.50,u:'1 Pz',g:'CANDADOS'},
+  {c:'CDD-H50',n:'Candado estándar 50mm dorado',p:3.88,u:'1 Pz',g:'CANDADOS'},
   {c:'CDM-G70',n:'Candado anticizalla acero sólido 70mm',p:8.65,u:'1 Pz',g:'CANDADOS'},
   {c:'CDM-G80',n:'Candado anticizalla acero sólido 80mm',p:9.75,u:'1 Pz',g:'CANDADOS'},
+  {c:'CDM-G90',n:'Candado anticizalla acero sólido 90mm',p:10.83,u:'1 Pz',g:'CANDADOS'},
+  {c:'CDM-G100',n:'Candado anticizalla acero sólido 100mm',p:11.48,u:'1 Pz',g:'CANDADOS'},
   {c:'MAN-H810',n:'Cerradura pomo c/llaves acero inox',p:8.45,u:'1 Pz',g:'CANDADOS'},
+  {c:'MAN-H812',n:'Cerradura pomo dormitorio cromado c/llaves',p:8.93,u:'1 Pz',g:'CANDADOS'},
   {c:'MAN-H815',n:'Cerradura pomo c/llaves dorado',p:11.37,u:'1 Pz',g:'CANDADOS'},
+  {c:'MAN-H816',n:'Cerradura tipo pomo c/llaves bronce',p:11.08,u:'1 Pz',g:'CANDADOS'},
+  {c:'MAN-Y55',n:'Cerradura manilla modelo L plana aluminio',p:14.63,u:'1 Pz',g:'CANDADOS'},
+  {c:'MAN-Y56',n:'Cerradura manilla modelo L plana dorada',p:17.54,u:'1 Pz',g:'CANDADOS'},
   {c:'BIS-01A',n:'Bisagra hierro 3" p/puertas (x und)',p:1.30,u:'Caj 12 Pz',g:'CANDADOS'},
+  {c:'BIS-02A',n:'Bisagra hierro 4" p/puertas (x und)',p:1.83,u:'Caj 12 Pz',g:'CANDADOS'},
+  {c:'BIS-10B',n:'Bisagra para puerta 3"x3" (x par)',p:2.68,u:'1 Par',g:'CANDADOS'},
+  {c:'PAS-E80',n:'Pasador acero inox cuadrado 2"',p:1.13,u:'1 Und',g:'CANDADOS'},
+  {c:'PAS-E81',n:'Pasador acero inox cuadrado 3"',p:1.21,u:'1 Und',g:'CANDADOS'},
+  {c:'PAS-R50',n:'Pasador hierro dorado 50mm 2"',p:2.35,u:'12 Pz',g:'CANDADOS'},
+  {c:'PAS-R70',n:'Pasador hierro 70mm 3"',p:3.00,u:'12 Pz',g:'CANDADOS'},
+  // ── HERRAMIENTAS ──
   {c:'ALI-M01',n:'Alicate combinado 6" industrial GDESEO',p:6.49,u:'x 2 Pz',g:'HERRAMIENTAS'},
   {c:'ALI-M02',n:'Alicate combinado 8" industrial GDESEO',p:8.38,u:'x 2 Pz',g:'HERRAMIENTAS'},
+  {c:'ALI-M03',n:'Alicate corte diagonal 6" GDESEO',p:6.00,u:'X 2 Pz',g:'HERRAMIENTAS'},
+  {c:'ALI-M04',n:'Alicate punta larga 6" GDESEO',p:5.88,u:'X 2pz',g:'HERRAMIENTAS'},
+  {c:'ALI-W0007',n:'Wokin alicate combinado 7"',p:5.71,u:'Mim X 2pz',g:'HERRAMIENTAS'},
   {c:'LLAV-W0006',n:'Wokin llave ajustable 150mm 6"',p:4.87,u:'Min 2 Pz',g:'HERRAMIENTAS'},
   {c:'LLAV-W0008',n:'Wokin llave ajustable 8" 200mm',p:5.73,u:'Min 2 Pz',g:'HERRAMIENTAS'},
+  {c:'DST-E04',n:'Destornillador estría engomado 6x100mm',p:2.02,u:'X 2pz',g:'HERRAMIENTAS'},
+  {c:'DST-P14',n:'Destornillador plano engomado 6x100mm',p:2.02,u:'X 2pz',g:'HERRAMIENTAS'},
+  {c:'DST-W2808',n:'Wokin juego destornilladores 4 planos+4 estría',p:11.81,u:'X 2 Paq',g:'HERRAMIENTAS'},
   {c:'TAL-1201',n:'Taladro impacto 1/2" 1000W 13mm 110V',p:58.50,u:'1 Und',g:'HERRAMIENTAS'},
+  {c:'ESM-4121',n:'Esmeril profesional 4.5" 960W 110V',p:54.21,u:'1 Pz',g:'HERRAMIENTAS'},
   {c:'ESM-4132',n:'Esmeril profesional 4.5" 800W 110V',p:49.93,u:'1 Pz',g:'HERRAMIENTAS'},
+  {c:'F-CS012',n:'Sierra circular 900W 4500RPM 110V',p:62.40,u:'1pz',g:'HERRAMIENTAS'},
+  {c:'CMT-P02',n:'Cinta métrica 5m/19mm GDESEO',p:3.87,u:'1 Pz',g:'HERRAMIENTAS'},
+  {c:'CMT-P03',n:'Cinta métrica 7.5m/25mm GDESEO',p:6.91,u:'1 Und',g:'HERRAMIENTAS'},
+  {c:'RMD-95',n:'Remachadora manual 4 boquillas GDESEO',p:8.68,u:'X 2 Pz',g:'HERRAMIENTAS'},
+  {c:'NIV-W5002',n:'Wokin nivel torpedo aluminio 22.5cm',p:2.88,u:'1 Pz',g:'HERRAMIENTAS'},
+  {c:'ESP-W0010',n:'Wokin espátula 4" mango madera',p:1.46,u:'1 Und',g:'HERRAMIENTAS'},
+  {c:'JGO-A09',n:'Juego llaves Allen hexagonal 9pzas GDESEO',p:5.86,u:'1 Pz',g:'HERRAMIENTAS'},
+  {c:'SGTA-T18',n:'Hoja segueta flexible 18T (x10)',p:9.82,u:'1 Paq',g:'HERRAMIENTAS'},
+  {c:'SGTA-T24',n:'Hoja segueta flexible 24T (x10)',p:9.82,u:'1 Paq',g:'HERRAMIENTAS'},
+  // ── SEGURIDAD ──
+  {c:'GLV-G363',n:'Guantes tela c/pepita negra 21cm',p:0.78,u:'12 Par',g:'HERRAMIENTAS'},
+  {c:'GLV-365',n:'Guantes tela gris c/pepita 27cm',p:1.52,u:'12 Par',g:'HERRAMIENTAS'},
+  {c:'GLV-F230',n:'Guantes nylon/nitrilo (par)',p:0.69,u:'12 Pares',g:'HERRAMIENTAS'},
+  {c:'LNT-481',n:'Lentes seguridad transparente c/varillas',p:0.93,u:'12 Pz',g:'HERRAMIENTAS'},
+  {c:'LNT-485',n:'Lentes seguridad transparente',p:1.41,u:'12 Pz',g:'HERRAMIENTAS'},
+  {c:'ANQ-01',n:'Chaleco seguridad reflectivo verde SEMILIC',p:2.73,u:'1 Und',g:'HERRAMIENTAS'},
+  {c:'ANQ-02',n:'Chaleco seguridad reflectivo naranja SEMILIC',p:2.73,u:'1 Und',g:'HERRAMIENTAS'},
+  // ── BOMBILLOS ──
   {c:'BLGD-A60',n:'Bombillo LED bulbo multivoltage 10W E27',p:1.30,u:'Min 25 Pz',g:'BOMBILLOS'},
+  {c:'BLGD-A80',n:'Bombillo LED bulbo 16W luz blanca 6500K E27',p:3.15,u:'X 50 Pz',g:'BOMBILLOS'},
   {c:'BLGD-K71',n:'Bombillo LED bulbo 16W luz amarilla E27',p:1.75,u:'100pz',g:'BOMBILLOS'},
+  {c:'BLGD-K03',n:'Bombillo LED vela 2W rosca E27 cálida',p:1.40,u:'50 Pz',g:'BOMBILLOS'},
   {c:'BLGD-R99',n:'Bombillo LED recargable 9W batería lithium',p:3.43,u:'1pz',g:'BOMBILLOS'},
   {c:'BGD-R30W',n:'Bombillo LED recargable 30W batería lithium',p:6.69,u:'1 Pz',g:'BOMBILLOS'},
+  {c:'BOM-BU9W',n:'Bombillo LED A60 9W rosca E27 Starled',p:1.16,u:'Min 5pz',g:'BOMBILLOS'},
   {c:'RFT-L001',n:'Reflector LED 50W 82-265V GDESEO',p:4.53,u:'10pz',g:'BOMBILLOS'},
   {c:'RFT-L002',n:'Reflector LED 100W 85-265V GDESEO',p:9.94,u:'12pz',g:'BOMBILLOS'},
+  {c:'RFT-L003',n:'Reflector LED 200W 85-265V GDESEO',p:17.45,u:'1pz',g:'BOMBILLOS'},
+  // ── ILUMINACION ──
   {c:'PAE-3WCU',n:'Panel LED cuadrado 3W empotrar 6500K',p:1.69,u:'1 Pz',g:'ILUMINACION'},
   {c:'PAE-6WCU',n:'Panel LED cuadrado 6W empotrar 6500K',p:2.07,u:'1 Pz',g:'ILUMINACION'},
   {c:'PAE-15WCU',n:'Panel LED cuadrado 15W empotrar 6500K',p:4.13,u:'1 Pz',g:'ILUMINACION'},
+  {c:'PAE-6WR',n:'Panel LED redondo 6W empotrar 6500K',p:1.71,u:'1 Pz',g:'ILUMINACION'},
   {c:'PAE-SB18',n:'Panel LED 18W redondo sin bordes empotrar',p:2.09,u:'1pz',g:'ILUMINACION'},
+  {c:'PAE-SB24W',n:'Panel LED 24W redondo sin bordes empotrar',p:2.39,u:'1pz',g:'ILUMINACION'},
   {c:'BOM-ALT50',n:'Bombillo LED alta potencia 50W multivoltage',p:10.37,u:'1pz',g:'ILUMINACION'},
   {c:'BOM-ALT150',n:'Bombillo LED alta potencia 150W multivoltage',p:28.95,u:'1pz',g:'ILUMINACION'},
+  {c:'GBAS-00',n:'Sócate para tubo LED y fluorescente (par)',p:1.45,u:'1 Par',g:'ILUMINACION'},
 ];
 
 // ── PEDIDO ──
@@ -2090,8 +2343,30 @@ window.dlPDF = async () => {
   y += 4;
   pdf.text('Contacto: distrigamaventas@gmail.com  |  +58 424-6306089', M, y);
   
-  // Save PDF
+  // Save / Share PDF
   const filename = 'Pedido_Distrigama_'+(cli||'Cliente').replace(/\s+/g,'_')+'_'+FMT_DATE.replace(/\//g,'-')+'.pdf';
+  
+  // Web Share API (móvil) — comparte el archivo directamente
+  if (navigator.canShare && typeof navigator.canShare === 'function') {
+    try {
+      const pdfBlob = pdf.output('blob');
+      const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
+      if (navigator.canShare({ files: [pdfFile] })) {
+        await navigator.share({
+          title: 'Pedido Distrigama',
+          text: `Pedido de ${cli} — $${total.toFixed(2)} ${moneda}`,
+          files: [pdfFile]
+        });
+        cart.length = 0; disc = 0;
+        renderProds();
+        return;
+      }
+    } catch(e) {
+      if (e.name !== 'AbortError') console.warn('Share falló, descargando:', e);
+    }
+  }
+  
+  // Fallback: descarga directa
   pdf.save(filename);
   cart.length = 0; disc = 0;
   renderProds();
@@ -2146,15 +2421,37 @@ function updDia(){
     document.getElementById('s-b').textContent=t.filter(e=>e.tipo==='B').length;
     document.getElementById('s-c').textContent=t.filter(e=>e.tipo==='C').length;
     
-    // Generar reporte
+    // Generar reporte — contar TODOS los resultados
     const vend=userProfile?.nombre||'[vendedor]';
     const ped=pedidosHoy.length;
-    const ape=t.filter(e=>e.res==='Apertura en proceso').length;
-    const seg=t.filter(e=>e.res==='Seguimiento pendiente').length;
-    const noi=t.filter(e=>e.res==='No interesado').length;
+    
+    // Los 9 resultados posibles
+    const cnt = res => t.filter(e=>e.res===res).length;
+    const noResp   = cnt('No se encontró responsable');
+    const ctcPrel  = cnt('Contacto preliminar (WhatsApp/teléfono)');
+    const presCat  = cnt('Presentación inicial (catálogo)');
+    const convPol  = cnt('Conversación de políticas (sin fecha)');
+    const visAcor  = cnt('Visita preliminar completada (fecha acordada)');
+    const propPed  = cnt('Proposición de pedido (en revisión)');
+    const pedCerr  = cnt('Pedido cerrado');
+    const noInt    = cnt('No interesado (rechazo activo)');
+    const compPres = cnt('Competencia presente (cliente satisfecho)');
+    const sinRes   = t.filter(e=>!e.res).length;
     
     let r=`📊 REPORTE CIERRE DE DÍA\n${FMT_DATE} · Vendedor: ${vend}\n\n`;
-    r+=`📍 Visitas totales: ${t.length}\n✅ Pedidos cerrados: ${ped}\n🔄 Aperturas en proceso: ${ape}\n⏰ Seguimiento pendiente: ${seg}\n❌ No interesados: ${noi}`;
+    r+=`📍 Visitas totales: ${t.length}   |   ✅ Pedidos Firestore: ${ped}\n`;
+    r+=`👥 Tipo A: ${t.filter(e=>e.tipo==='A').length}  B: ${t.filter(e=>e.tipo==='B').length}  C: ${t.filter(e=>e.tipo==='C').length}\n\n`;
+    r+=`── RESULTADOS DE VISITA ──\n`;
+    if(pedCerr)   r+=`✅✅ Pedido cerrado: ${pedCerr}\n`;
+    if(propPed)   r+=`✅  Proposición de pedido (en revisión): ${propPed}\n`;
+    if(visAcor)   r+=`✅  Visita completada (fecha acordada): ${visAcor}\n`;
+    if(convPol)   r+=`⚠️  Conversación de políticas (sin fecha): ${convPol}\n`;
+    if(presCat)   r+=`⚠️  Presentación inicial (catálogo): ${presCat}\n`;
+    if(ctcPrel)   r+=`❌  Contacto preliminar (WhatsApp): ${ctcPrel}\n`;
+    if(noResp)    r+=`❌  No se encontró responsable: ${noResp}\n`;
+    if(noInt)     r+=`❌  No interesado (rechazo activo): ${noInt}\n`;
+    if(compPres)  r+=`❌  Competencia presente: ${compPres}\n`;
+    if(sinRes)    r+=`⬜  Sin resultado registrado: ${sinRes}\n`;
     
     if(t.length){
       r+=`\n\nDETALLE VISITAS:\n`;
